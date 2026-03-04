@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Fonts ──────────────────────────────────────────── */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque[opsz,wdth,wght].woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("/assets/fonts/Sora[wght].woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/assets/fonts/JetBrainsMono[wght].woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Design Tokens ───────────────────────────────────── */
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* Background layers */
+    --background: 0.12 0.018 255;
+    --foreground: 0.94 0.01 240;
+
+    --card: 0.15 0.02 255;
+    --card-foreground: 0.94 0.01 240;
+
+    --popover: 0.17 0.025 255;
+    --popover-foreground: 0.94 0.01 240;
+
+    /* Primary = Cyan accent */
+    --primary: 0.82 0.16 195;
+    --primary-foreground: 0.08 0.02 255;
+
+    /* Secondary */
+    --secondary: 0.2 0.03 255;
+    --secondary-foreground: 0.82 0.16 195;
+
+    /* Muted */
+    --muted: 0.18 0.02 255;
+    --muted-foreground: 0.58 0.04 240;
+
+    /* Accent */
+    --accent: 0.22 0.04 255;
+    --accent-foreground: 0.94 0.01 240;
+
+    /* Destructive */
+    --destructive: 0.60 0.22 25;
+    --destructive-foreground: 0.97 0 0;
+
+    /* Border / input / ring */
+    --border: 0.26 0.04 255;
+    --input: 0.22 0.03 255;
+    --ring: 0.82 0.16 195;
+
+    /* Charts */
+    --chart-1: 0.82 0.16 195;
+    --chart-2: 0.70 0.18 240;
+    --chart-3: 0.65 0.22 170;
+    --chart-4: 0.75 0.20 290;
+    --chart-5: 0.68 0.22 145;
+
+    /* Sidebar */
+    --sidebar: 0.10 0.02 255;
+    --sidebar-foreground: 0.85 0.02 240;
+    --sidebar-primary: 0.82 0.16 195;
+    --sidebar-primary-foreground: 0.08 0.02 255;
+    --sidebar-accent: 0.18 0.03 255;
+    --sidebar-accent-foreground: 0.94 0.01 240;
+    --sidebar-border: 0.22 0.03 255;
+    --sidebar-ring: 0.82 0.16 195;
+
+    /* Custom portfolio tokens */
+    --cyan: 0.82 0.16 195;
+    --navy: 0.10 0.025 255;
+    --navy-light: 0.18 0.03 255;
+    --electric: 0.72 0.20 260;
+    --glow: 0.82 0.16 195;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Sora", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-mono {
+    font-family: "JetBrains Mono", monospace;
+  }
+}
+
+/* ─── Utilities ───────────────────────────────────────── */
+@layer utilities {
+  /* Glow effects */
+  .glow-cyan {
+    box-shadow: 0 0 20px oklch(0.82 0.16 195 / 0.3), 0 0 60px oklch(0.82 0.16 195 / 0.1);
+  }
+  .glow-cyan-sm {
+    box-shadow: 0 0 10px oklch(0.82 0.16 195 / 0.4);
+  }
+  .text-glow-cyan {
+    text-shadow: 0 0 20px oklch(0.82 0.16 195 / 0.5);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, oklch(0.82 0.16 195), oklch(0.72 0.20 260), oklch(0.82 0.16 195));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Background patterns */
+  .bg-grid {
+    background-image:
+      linear-gradient(oklch(0.82 0.16 195 / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.82 0.16 195 / 0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .bg-dots {
+    background-image: radial-gradient(oklch(0.82 0.16 195 / 0.12) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  /* Noise texture overlay */
+  .bg-noise {
+    position: relative;
+  }
+  .bg-noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    background: oklch(0.15 0.02 255 / 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid oklch(0.82 0.16 195 / 0.15);
+  }
+
+  .glass-dark {
+    background: oklch(0.10 0.02 255 / 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid oklch(0.26 0.04 255 / 0.5);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: oklch(0.12 0.018 255);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.30 0.05 255);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.82 0.16 195 / 0.6);
+  }
+}
+
+/* ─── Custom animations ───────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 oklch(0.82 0.16 195 / 0.4); }
+  100% { box-shadow: 0 0 0 20px oklch(0.82 0.16 195 / 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.18 0.02 255) 25%,
+    oklch(0.22 0.03 255) 50%,
+    oklch(0.18 0.02 255) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
