@@ -94,7 +94,8 @@ export default function AdminTestimonials() {
         toast.success("Testimonial created");
       }
       setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.error("Failed to save testimonial:", err);
       toast.error("Failed to save");
     }
   };
@@ -104,7 +105,8 @@ export default function AdminTestimonials() {
     try {
       await deleteT.mutateAsync(deleteId);
       toast.success("Deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete testimonial:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);

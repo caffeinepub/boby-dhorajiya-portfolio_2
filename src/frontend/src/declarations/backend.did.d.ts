@@ -11,13 +11,13 @@ import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
 export interface BlogPost {
-  'id' : BlogPostId,
+  'id' : Id,
   'title' : string,
   'content' : string,
   'isPublished' : boolean,
   'slug' : string,
   'tags' : Array<string>,
-  'publishedAt' : Time,
+  'publishedAt' : bigint,
   'coverImage' : string,
   'excerpt' : string,
 }
@@ -31,12 +31,12 @@ export type Category__1 = { 'web' : null } |
   { 'mobile' : null } |
   { 'backend' : null };
 export interface Category__2 {
-  'id' : CategoryId,
+  'id' : Id,
   'sortOrder' : bigint,
   'name' : string,
 }
 export interface Contact {
-  'id' : ContactId,
+  'id' : Id,
   'name' : string,
   'createdAt' : Time,
   'email' : string,
@@ -44,7 +44,7 @@ export interface Contact {
 }
 export type ContactId = bigint;
 export interface Experience {
-  'id' : ExperienceId,
+  'id' : Id,
   'title' : string,
   'duration' : string,
   'sortOrder' : bigint,
@@ -52,8 +52,9 @@ export interface Experience {
   'company' : string,
 }
 export type ExperienceId = bigint;
+export type Id = bigint;
 export interface Project {
-  'id' : ProjectId,
+  'id' : Id,
   'title' : string,
   'sortOrder' : bigint,
   'tags' : Array<string>,
@@ -71,7 +72,7 @@ export interface SeoSettings {
   'metaTitle' : string,
 }
 export interface Service {
-  'id' : ServiceId,
+  'id' : Id,
   'title' : string,
   'sortOrder' : bigint,
   'icon' : string,
@@ -79,7 +80,7 @@ export interface Service {
 }
 export type ServiceId = bigint;
 export interface Skill {
-  'id' : SkillId,
+  'id' : Id,
   'sortOrder' : bigint,
   'icon' : string,
   'name' : string,
@@ -88,7 +89,7 @@ export interface Skill {
 }
 export type SkillId = bigint;
 export interface SocialLink {
-  'id' : SocialLinkId,
+  'id' : Id,
   'url' : string,
   'sortOrder' : bigint,
   'platform' : string,
@@ -96,7 +97,7 @@ export interface SocialLink {
 }
 export type SocialLinkId = bigint;
 export interface Testimonial {
-  'id' : TestimonialId,
+  'id' : Id,
   'content' : string,
   'sortOrder' : bigint,
   'name' : string,

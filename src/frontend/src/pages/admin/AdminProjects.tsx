@@ -8,6 +8,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const safeBigInt = (val: string | number, fallback = 0n): bigint => {
+  try {
+    const n = typeof val === "number" ? val : Number.parseInt(val, 10);
+    if (Number.isNaN(n)) return fallback;
+    return BigInt(Math.max(0, Math.floor(n)));
+  } catch {
+    return fallback;
+  }
+};
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,7 +131,8 @@ export default function AdminProjects() {
         toast.success("Project created");
       }
       setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.error("Failed to save project:", err);
       toast.error("Failed to save project");
     }
   };
@@ -131,7 +142,8 @@ export default function AdminProjects() {
     try {
       await deleteProject.mutateAsync(deleteId);
       toast.success("Project deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete project:", err);
       toast.error("Failed to delete project");
     } finally {
       setDeleteId(null);
@@ -244,7 +256,11 @@ export default function AdminProjects() {
                           toast.success(
                             checked ? "Project activated" : "Project hidden",
                           );
-                        } catch {
+                        } catch (err) {
+                          console.error(
+                            "Failed to update project status:",
+                            err,
+                          );
                           toast.error("Failed to update");
                         }
                       }}
@@ -347,7 +363,7 @@ export default function AdminProjects() {
                   onChange={(e) =>
                     setForm((p) => ({
                       ...p,
-                      sortOrder: BigInt(e.target.value || 0),
+                      sortOrder: safeBigInt(e.target.value),
                     }))
                   }
                   className="bg-background"

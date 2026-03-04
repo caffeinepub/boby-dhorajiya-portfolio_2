@@ -1,18 +1,21 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Array "mo:core/Array";
-import List "mo:core/List";
 import Iter "mo:core/Iter";
-import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
-import Time "mo:core/Time";
-import Int "mo:core/Int";
 import Text "mo:core/Text";
-import Bool "mo:core/Bool";
-import Option "mo:core/Option";
 import Principal "mo:core/Principal";
-import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+import MixinAuthorization "authorization/MixinAuthorization";
+import Blog "Blog";
+import Project "Project";
+import Category "Category";
+import Service "Service";
+import Skill "Skill";
+import SocialLink "SocialLink";
+import Experience "Experience";
+import Contact "Contact";
+import Testimonial "Testimonial";
 
 actor {
   // Seed actor with one admin user
@@ -29,190 +32,16 @@ actor {
   type CategoryId = Nat;
   type ContactId = Nat;
   type SocialLinkId = Nat;
-
-  public type UserProfile = {
+  type UserProfile = {
     name : Text;
   };
-
-  let userProfiles = Map.empty<Principal, UserProfile>();
-
-  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access profiles");
-    };
-    userProfiles.get(caller);
-  };
-
-  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
-    userProfiles.get(user);
-  };
-
-  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
-    };
-    userProfiles.add(caller, profile);
-  };
-
-  module Project {
-    public type Category = {
-      #mobile;
-      #web;
-      #backend;
-    };
-
-    public type Project = {
-      id : ProjectId;
-      title : Text;
-      description : Text;
-      category : Category;
-      imageUrl : Text;
-      liveUrl : Text;
-      repoUrl : Text;
-      tags : [Text];
-      isActive : Bool;
-      sortOrder : Nat;
-    };
-
-    public func compare(a : Project, b : Project) : Order.Order {
-      Nat.compare(a.sortOrder, b.sortOrder);
-    };
-  };
-
-  module Skill {
-    public type Category = {
-      #primary;
-      #secondary;
-      #security;
-      #additional;
-    };
-
-    public type Skill = {
-      id : SkillId;
-      name : Text;
-      category : Category;
-      level : Nat;
-      icon : Text;
-      sortOrder : Nat;
-    };
-
-    public func compare(a : Skill, b : Skill) : Order.Order {
-      Nat.compare(a.sortOrder, b.sortOrder);
-    };
-  };
-
-  module Service {
-    public type Service = {
-      id : ServiceId;
-      title : Text;
-      description : Text;
-      icon : Text;
-      sortOrder : Nat;
-    };
-
-    public func compare(a : Service, b : Service) : Order.Order {
-      Nat.compare(a.sortOrder, b.sortOrder);
-    };
-  };
-
-  module Testimonial {
-    public type Testimonial = {
-      id : TestimonialId;
-      name : Text;
-      role : Text;
-      company : Text;
-      content : Text;
-      avatarUrl : Text;
-      rating : Nat;
-      sortOrder : Nat;
-    };
-
-    public func compare(a : Testimonial, b : Testimonial) : Order.Order {
-      Nat.compare(a.sortOrder, b.sortOrder);
-    };
-  };
-
-  module Blog {
-    public type BlogPost = {
-      id : BlogPostId;
-      title : Text;
-      slug : Text;
-      content : Text;
-      excerpt : Text;
-      coverImage : Text;
-      tags : [Text];
-      publishedAt : Time.Time;
-      isPublished : Bool;
-    };
-
-    public func compareByPublishedAt(a : BlogPost, b : BlogPost) : Order.Order {
-      Int.compare(b.publishedAt, a.publishedAt);
-    };
-  };
-
-  module Experience {
-    public type Experience = {
-      id : ExperienceId;
-      title : Text;
-      company : Text;
-      duration : Text;
-      description : Text;
-      sortOrder : Nat;
-    };
-
-    public func compare(a : Experience, b : Experience) : Order.Order {
-      Nat.compare(a.sortOrder, b.sortOrder);
-    };
-  };
-
-  module Category {
-    public type Category = {
-      id : CategoryId;
-      name : Text;
-      sortOrder : Nat;
-    };
-
-    public func compare(a : Category, b : Category) : Order.Order {
-      Nat.compare(a.sortOrder, b.sortOrder);
-    };
-  };
-
-  module Contact {
-    public type Contact = {
-      id : ContactId;
-      name : Text;
-      email : Text;
-      message : Text;
-      createdAt : Time.Time;
-    };
-
-    public func compareByCreatedAt(a : Contact, b : Contact) : Order.Order {
-      Int.compare(b.createdAt, a.createdAt);
-    };
-  };
-
-  module SocialLink {
-    public type SocialLink = {
-      id : SocialLinkId;
-      platform : Text;
-      url : Text;
-      isActive : Bool;
-      sortOrder : Nat;
-    };
-
-    public func compare(a : SocialLink, b : SocialLink) : Order.Order {
-      Nat.compare(a.sortOrder, b.sortOrder);
-    };
-  };
-
   type SeoSettings = {
     metaTitle : Text;
     metaDescription : Text;
     ogImage : Text;
   };
+
+  let userProfiles = Map.empty<Principal, UserProfile>();
 
   // Persistent storage
   let projects = Map.empty<ProjectId, Project.Project>();
@@ -241,6 +70,27 @@ actor {
   var nextCategoryId = 0;
   var nextContactId = 0;
   var nextSocialLinkId = 0;
+
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access profiles");
+    };
+    userProfiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    userProfiles.add(caller, profile);
+  };
 
   // Projects
   public shared ({ caller }) func createProject(project : Project.Project) : async ProjectId {
@@ -778,22 +628,6 @@ actor {
       leadsCount = contacts.size();
       servicesCount = services.size();
       testimonialsCount = testimonials.size();
-    };
-  };
-
-  // Seed initial experience
-  system func preupgrade() {
-    if (experiences.size() == 0) {
-      let initialExperience : Experience.Experience = {
-        id = 0;
-        title = "Mobile App Developer";
-        company = "Nexus IT Solution";
-        duration = "2022 - Present";
-        description = "Building cross-platform mobile applications with Flutter and React Native, focusing on secure architecture and performance optimization.";
-        sortOrder = 0;
-      };
-      experiences.add(0, initialExperience);
-      nextExperienceId := 1;
     };
   };
 };

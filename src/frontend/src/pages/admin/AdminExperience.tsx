@@ -31,6 +31,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { Experience } from "../../backend.d";
 
+const safeBigInt = (val: string | number, fallback = 0n): bigint => {
+  try {
+    const n = typeof val === "number" ? val : Number.parseInt(val, 10);
+    if (Number.isNaN(n)) return fallback;
+    return BigInt(Math.max(0, Math.floor(n)));
+  } catch {
+    return fallback;
+  }
+};
+
 const emptyExp: Omit<Experience, "id"> = {
   title: "",
   company: "",
@@ -84,7 +94,10 @@ export default function AdminExperience() {
         toast.success("Experience created");
       }
       setModalOpen(false);
-    } catch {
+      setForm(emptyExp);
+      setEditingExp(null);
+    } catch (err) {
+      console.error("Failed to save experience:", err);
       toast.error("Failed to save");
     }
   };
@@ -94,7 +107,8 @@ export default function AdminExperience() {
     try {
       await deleteExp.mutateAsync(deleteId);
       toast.success("Deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete experience:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);
@@ -256,7 +270,7 @@ export default function AdminExperience() {
                 onChange={(e) =>
                   setForm((p) => ({
                     ...p,
-                    sortOrder: BigInt(e.target.value || 0),
+                    sortOrder: safeBigInt(e.target.value),
                   }))
                 }
                 className="bg-background"

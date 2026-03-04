@@ -8,6 +8,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const safeBigInt = (val: string | number, fallback = 0n): bigint => {
+  try {
+    const n = typeof val === "number" ? val : Number.parseInt(val, 10);
+    if (Number.isNaN(n)) return fallback;
+    return BigInt(Math.max(0, Math.floor(n)));
+  } catch {
+    return fallback;
+  }
+};
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -82,7 +92,8 @@ export default function AdminServices() {
         toast.success("Service created");
       }
       setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.error("Failed to save service:", err);
       toast.error("Failed to save");
     }
   };
@@ -92,7 +103,8 @@ export default function AdminServices() {
     try {
       await deleteService.mutateAsync(deleteId);
       toast.success("Deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete service:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);
@@ -239,7 +251,7 @@ export default function AdminServices() {
                 onChange={(e) =>
                   setForm((p) => ({
                     ...p,
-                    sortOrder: BigInt(e.target.value || 0),
+                    sortOrder: safeBigInt(e.target.value),
                   }))
                 }
                 className="bg-background"

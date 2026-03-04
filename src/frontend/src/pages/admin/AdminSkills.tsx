@@ -8,6 +8,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const safeBigInt = (val: string | number, fallback = 0n): bigint => {
+  try {
+    const n = typeof val === "number" ? val : Number.parseInt(val, 10);
+    if (Number.isNaN(n)) return fallback;
+    return BigInt(Math.max(0, Math.floor(n)));
+  } catch {
+    return fallback;
+  }
+};
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -115,7 +125,8 @@ export default function AdminSkills() {
         toast.success("Skill created");
       }
       setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.error("Failed to save skill:", err);
       toast.error("Failed to save skill");
     }
   };
@@ -125,7 +136,8 @@ export default function AdminSkills() {
     try {
       await deleteSkill.mutateAsync(deleteId);
       toast.success("Skill deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete skill:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);
@@ -317,7 +329,7 @@ export default function AdminSkills() {
                 onChange={(e) =>
                   setForm((p) => ({
                     ...p,
-                    sortOrder: BigInt(e.target.value || 0),
+                    sortOrder: safeBigInt(e.target.value),
                   }))
                 }
                 className="bg-background"

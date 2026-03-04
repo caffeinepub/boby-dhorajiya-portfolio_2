@@ -15,7 +15,7 @@ export interface SeoSettings {
 }
 export type Time = bigint;
 export interface Contact {
-    id: ContactId;
+    id: Id;
     name: string;
     createdAt: Time;
     email: string;
@@ -23,39 +23,39 @@ export interface Contact {
 }
 export type SkillId = bigint;
 export interface SocialLink {
-    id: SocialLinkId;
+    id: Id;
     url: string;
     sortOrder: bigint;
     platform: string;
     isActive: boolean;
 }
 export interface Service {
-    id: ServiceId;
+    id: Id;
     title: string;
     sortOrder: bigint;
     icon: string;
     description: string;
 }
 export interface BlogPost {
-    id: BlogPostId;
+    id: Id;
     title: string;
     content: string;
     isPublished: boolean;
     slug: string;
     tags: Array<string>;
-    publishedAt: Time;
+    publishedAt: bigint;
     coverImage: string;
     excerpt: string;
 }
 export type ExperienceId = bigint;
 export interface Category__2 {
-    id: CategoryId;
+    id: Id;
     sortOrder: bigint;
     name: string;
 }
 export type BlogPostId = bigint;
 export interface Skill {
-    id: SkillId;
+    id: Id;
     sortOrder: bigint;
     icon: string;
     name: string;
@@ -63,19 +63,20 @@ export interface Skill {
     category: Category;
 }
 export interface Experience {
-    id: ExperienceId;
+    id: Id;
     title: string;
     duration: string;
     sortOrder: bigint;
     description: string;
     company: string;
 }
+export type Id = bigint;
 export type ProjectId = bigint;
 export type SocialLinkId = bigint;
 export type ContactId = bigint;
 export type CategoryId = bigint;
 export interface Project {
-    id: ProjectId;
+    id: Id;
     title: string;
     sortOrder: bigint;
     tags: Array<string>;
@@ -91,7 +92,7 @@ export interface UserProfile {
     name: string;
 }
 export interface Testimonial {
-    id: TestimonialId;
+    id: Id;
     content: string;
     sortOrder: bigint;
     name: string;

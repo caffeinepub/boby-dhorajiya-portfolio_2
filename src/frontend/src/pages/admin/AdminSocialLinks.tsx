@@ -8,6 +8,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const safeBigInt = (val: string | number, fallback = 0n): bigint => {
+  try {
+    const n = typeof val === "number" ? val : Number.parseInt(val, 10);
+    if (Number.isNaN(n)) return fallback;
+    return BigInt(Math.max(0, Math.floor(n)));
+  } catch {
+    return fallback;
+  }
+};
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -82,7 +92,8 @@ export default function AdminSocialLinks() {
         toast.success("Link created");
       }
       setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.error("Failed to save social link:", err);
       toast.error("Failed to save");
     }
   };
@@ -92,7 +103,8 @@ export default function AdminSocialLinks() {
     try {
       await deleteLink.mutateAsync(deleteId);
       toast.success("Deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete social link:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);
@@ -167,7 +179,11 @@ export default function AdminSocialLinks() {
                           link: { ...link, isActive: v },
                         });
                         toast.success(v ? "Link activated" : "Link hidden");
-                      } catch {
+                      } catch (err) {
+                        console.error(
+                          "Failed to update social link status:",
+                          err,
+                        );
                         toast.error("Failed to update");
                       }
                     }}
@@ -240,7 +256,7 @@ export default function AdminSocialLinks() {
                 onChange={(e) =>
                   setForm((p) => ({
                     ...p,
-                    sortOrder: BigInt(e.target.value || 0),
+                    sortOrder: safeBigInt(e.target.value),
                   }))
                 }
                 className="bg-background"

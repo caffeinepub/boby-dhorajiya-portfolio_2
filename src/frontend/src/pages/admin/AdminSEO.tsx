@@ -35,7 +35,8 @@ export default function AdminSEO() {
     try {
       await updateSeo.mutateAsync(form);
       toast.success("SEO settings saved");
-    } catch {
+    } catch (err) {
+      console.error("Failed to save SEO settings:", err);
       toast.error("Failed to save SEO settings");
     }
   };

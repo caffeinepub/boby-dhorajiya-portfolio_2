@@ -8,6 +8,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const safeBigInt = (val: string | number, fallback = 0n): bigint => {
+  try {
+    const n = typeof val === "number" ? val : Number.parseInt(val, 10);
+    if (Number.isNaN(n)) return fallback;
+    return BigInt(Math.max(0, Math.floor(n)));
+  } catch {
+    return fallback;
+  }
+};
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -71,7 +81,8 @@ export default function AdminCategories() {
         toast.success("Category created");
       }
       setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.error("Failed to save category:", err);
       toast.error("Failed to save");
     }
   };
@@ -81,7 +92,8 @@ export default function AdminCategories() {
     try {
       await deleteCategory.mutateAsync(deleteId);
       toast.success("Deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete category:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);
@@ -202,7 +214,7 @@ export default function AdminCategories() {
                 onChange={(e) =>
                   setForm((p) => ({
                     ...p,
-                    sortOrder: BigInt(e.target.value || 0),
+                    sortOrder: safeBigInt(e.target.value),
                   }))
                 }
                 className="bg-background"

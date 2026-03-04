@@ -108,12 +108,33 @@ export default function AdminLogin() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-5 text-sm text-destructive"
+              className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-5 text-sm text-destructive space-y-2"
               data-ocid="admin.error_state"
             >
-              Access denied. Please open this app from the Caffeine dashboard to
-              get admin access. Your Internet Identity principal has not been
-              granted admin permissions yet.
+              <p className="font-semibold">Access denied.</p>
+              <p>
+                To get admin access after every new build, follow these steps:
+              </p>
+              <ol className="list-decimal list-inside space-y-1 text-xs">
+                <li>
+                  Go to your <strong>Caffeine dashboard</strong>
+                </li>
+                <li>
+                  Click the <strong>preview/open link</strong> for this project
+                  (do NOT type the URL manually)
+                </li>
+                <li>
+                  Navigate to <strong>/admin</strong> from that link
+                </li>
+                <li>
+                  Click <strong>Login with Internet Identity</strong>
+                </li>
+              </ol>
+              <p className="text-xs mt-1 text-destructive/80">
+                The Caffeine dashboard link includes your admin token, which
+                registers your identity as admin on first login after each new
+                deployment.
+              </p>
             </motion.div>
           )}
 

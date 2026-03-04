@@ -133,7 +133,7 @@ export default function AdminBlog() {
       tags,
       publishedAt:
         form.isPublished && form.publishedAt === 0n
-          ? BigInt(Date.now() * 1_000_000)
+          ? BigInt(Date.now()) * 1_000_000n
           : form.publishedAt,
     };
 
@@ -149,7 +149,8 @@ export default function AdminBlog() {
         toast.success("Post created");
       }
       setModalOpen(false);
-    } catch {
+    } catch (err) {
+      console.error("Failed to save blog post:", err);
       toast.error("Failed to save post");
     }
   };
@@ -159,7 +160,8 @@ export default function AdminBlog() {
     try {
       await deletePost.mutateAsync(deleteId);
       toast.success("Post deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete blog post:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);

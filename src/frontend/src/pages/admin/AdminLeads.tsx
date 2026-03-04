@@ -63,7 +63,8 @@ export default function AdminLeads() {
     try {
       await deleteContact.mutateAsync(deleteId);
       toast.success("Lead deleted");
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete lead:", err);
       toast.error("Failed to delete");
     } finally {
       setDeleteId(null);

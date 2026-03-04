@@ -97,7 +97,7 @@ export interface SeoSettings {
 }
 export type Time = bigint;
 export interface Contact {
-    id: ContactId;
+    id: Id;
     name: string;
     createdAt: Time;
     email: string;
@@ -105,39 +105,39 @@ export interface Contact {
 }
 export type SkillId = bigint;
 export interface SocialLink {
-    id: SocialLinkId;
+    id: Id;
     url: string;
     sortOrder: bigint;
     platform: string;
     isActive: boolean;
 }
 export interface Service {
-    id: ServiceId;
+    id: Id;
     title: string;
     sortOrder: bigint;
     icon: string;
     description: string;
 }
 export interface BlogPost {
-    id: BlogPostId;
+    id: Id;
     title: string;
     content: string;
     isPublished: boolean;
     slug: string;
     tags: Array<string>;
-    publishedAt: Time;
+    publishedAt: bigint;
     coverImage: string;
     excerpt: string;
 }
 export type ExperienceId = bigint;
 export interface Category__2 {
-    id: CategoryId;
+    id: Id;
     sortOrder: bigint;
     name: string;
 }
 export type BlogPostId = bigint;
 export interface Skill {
-    id: SkillId;
+    id: Id;
     sortOrder: bigint;
     icon: string;
     name: string;
@@ -145,19 +145,20 @@ export interface Skill {
     category: Category;
 }
 export interface Experience {
-    id: ExperienceId;
+    id: Id;
     title: string;
     duration: string;
     sortOrder: bigint;
     description: string;
     company: string;
 }
+export type Id = bigint;
 export type ProjectId = bigint;
 export type SocialLinkId = bigint;
 export type ContactId = bigint;
 export type CategoryId = bigint;
 export interface Project {
-    id: ProjectId;
+    id: Id;
     title: string;
     sortOrder: bigint;
     tags: Array<string>;
@@ -173,7 +174,7 @@ export interface UserProfile {
     name: string;
 }
 export interface Testimonial {
-    id: TestimonialId;
+    id: Id;
     content: string;
     sortOrder: bigint;
     name: string;
@@ -263,7 +264,7 @@ export interface backendInterface {
     updateSocialLink(id: SocialLinkId, socialLink: SocialLink): Promise<void>;
     updateTestimonial(id: TestimonialId, testimonial: Testimonial): Promise<void>;
 }
-import type { Category as _Category, Category__1 as _Category__1, Project as _Project, ProjectId as _ProjectId, Skill as _Skill, SkillId as _SkillId, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { Category as _Category, Category__1 as _Category__1, Id as _Id, Project as _Project, Skill as _Skill, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -1077,7 +1078,7 @@ function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     return value.length === 0 ? null : value[0];
 }
 function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: _ProjectId;
+    id: _Id;
     title: string;
     sortOrder: bigint;
     tags: Array<string>;
@@ -1088,7 +1089,7 @@ function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uin
     category: _Category__1;
     liveUrl: string;
 }): {
-    id: ProjectId;
+    id: Id;
     title: string;
     sortOrder: bigint;
     tags: Array<string>;
@@ -1113,14 +1114,14 @@ function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uin
     };
 }
 function from_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: _SkillId;
+    id: _Id;
     sortOrder: bigint;
     icon: string;
     name: string;
     level: bigint;
     category: _Category;
 }): {
-    id: SkillId;
+    id: Id;
     sortOrder: bigint;
     icon: string;
     name: string;
@@ -1187,7 +1188,7 @@ function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);
 }
 function to_candid_record_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: ProjectId;
+    id: Id;
     title: string;
     sortOrder: bigint;
     tags: Array<string>;
@@ -1198,7 +1199,7 @@ function to_candid_record_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     category: Category__1;
     liveUrl: string;
 }): {
-    id: _ProjectId;
+    id: _Id;
     title: string;
     sortOrder: bigint;
     tags: Array<string>;
@@ -1223,14 +1224,14 @@ function to_candid_record_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     };
 }
 function to_candid_record_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: SkillId;
+    id: Id;
     sortOrder: bigint;
     icon: string;
     name: string;
     level: bigint;
     category: Category;
 }): {
-    id: _SkillId;
+    id: _Id;
     sortOrder: bigint;
     icon: string;
     name: string;

@@ -13,50 +13,50 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const BlogPostId = IDL.Nat;
-export const Time = IDL.Int;
+export const Id = IDL.Nat;
 export const BlogPost = IDL.Record({
-  'id' : BlogPostId,
+  'id' : Id,
   'title' : IDL.Text,
   'content' : IDL.Text,
   'isPublished' : IDL.Bool,
   'slug' : IDL.Text,
   'tags' : IDL.Vec(IDL.Text),
-  'publishedAt' : Time,
+  'publishedAt' : IDL.Int,
   'coverImage' : IDL.Text,
   'excerpt' : IDL.Text,
 });
-export const CategoryId = IDL.Nat;
+export const BlogPostId = IDL.Nat;
 export const Category__2 = IDL.Record({
-  'id' : CategoryId,
+  'id' : Id,
   'sortOrder' : IDL.Nat,
   'name' : IDL.Text,
 });
-export const ContactId = IDL.Nat;
+export const CategoryId = IDL.Nat;
+export const Time = IDL.Int;
 export const Contact = IDL.Record({
-  'id' : ContactId,
+  'id' : Id,
   'name' : IDL.Text,
   'createdAt' : Time,
   'email' : IDL.Text,
   'message' : IDL.Text,
 });
-export const ExperienceId = IDL.Nat;
+export const ContactId = IDL.Nat;
 export const Experience = IDL.Record({
-  'id' : ExperienceId,
+  'id' : Id,
   'title' : IDL.Text,
   'duration' : IDL.Text,
   'sortOrder' : IDL.Nat,
   'description' : IDL.Text,
   'company' : IDL.Text,
 });
-export const ProjectId = IDL.Nat;
+export const ExperienceId = IDL.Nat;
 export const Category__1 = IDL.Variant({
   'web' : IDL.Null,
   'mobile' : IDL.Null,
   'backend' : IDL.Null,
 });
 export const Project = IDL.Record({
-  'id' : ProjectId,
+  'id' : Id,
   'title' : IDL.Text,
   'sortOrder' : IDL.Nat,
   'tags' : IDL.Vec(IDL.Text),
@@ -67,15 +67,15 @@ export const Project = IDL.Record({
   'category' : Category__1,
   'liveUrl' : IDL.Text,
 });
-export const ServiceId = IDL.Nat;
+export const ProjectId = IDL.Nat;
 export const Service = IDL.Record({
-  'id' : ServiceId,
+  'id' : Id,
   'title' : IDL.Text,
   'sortOrder' : IDL.Nat,
   'icon' : IDL.Text,
   'description' : IDL.Text,
 });
-export const SkillId = IDL.Nat;
+export const ServiceId = IDL.Nat;
 export const Category = IDL.Variant({
   'security' : IDL.Null,
   'secondary' : IDL.Null,
@@ -83,24 +83,24 @@ export const Category = IDL.Variant({
   'additional' : IDL.Null,
 });
 export const Skill = IDL.Record({
-  'id' : SkillId,
+  'id' : Id,
   'sortOrder' : IDL.Nat,
   'icon' : IDL.Text,
   'name' : IDL.Text,
   'level' : IDL.Nat,
   'category' : Category,
 });
-export const SocialLinkId = IDL.Nat;
+export const SkillId = IDL.Nat;
 export const SocialLink = IDL.Record({
-  'id' : SocialLinkId,
+  'id' : Id,
   'url' : IDL.Text,
   'sortOrder' : IDL.Nat,
   'platform' : IDL.Text,
   'isActive' : IDL.Bool,
 });
-export const TestimonialId = IDL.Nat;
+export const SocialLinkId = IDL.Nat;
 export const Testimonial = IDL.Record({
-  'id' : TestimonialId,
+  'id' : Id,
   'content' : IDL.Text,
   'sortOrder' : IDL.Nat,
   'name' : IDL.Text,
@@ -109,6 +109,7 @@ export const Testimonial = IDL.Record({
   'avatarUrl' : IDL.Text,
   'rating' : IDL.Nat,
 });
+export const TestimonialId = IDL.Nat;
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const SeoSettings = IDL.Record({
   'metaDescription' : IDL.Text,
@@ -200,50 +201,50 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const BlogPostId = IDL.Nat;
-  const Time = IDL.Int;
+  const Id = IDL.Nat;
   const BlogPost = IDL.Record({
-    'id' : BlogPostId,
+    'id' : Id,
     'title' : IDL.Text,
     'content' : IDL.Text,
     'isPublished' : IDL.Bool,
     'slug' : IDL.Text,
     'tags' : IDL.Vec(IDL.Text),
-    'publishedAt' : Time,
+    'publishedAt' : IDL.Int,
     'coverImage' : IDL.Text,
     'excerpt' : IDL.Text,
   });
-  const CategoryId = IDL.Nat;
+  const BlogPostId = IDL.Nat;
   const Category__2 = IDL.Record({
-    'id' : CategoryId,
+    'id' : Id,
     'sortOrder' : IDL.Nat,
     'name' : IDL.Text,
   });
-  const ContactId = IDL.Nat;
+  const CategoryId = IDL.Nat;
+  const Time = IDL.Int;
   const Contact = IDL.Record({
-    'id' : ContactId,
+    'id' : Id,
     'name' : IDL.Text,
     'createdAt' : Time,
     'email' : IDL.Text,
     'message' : IDL.Text,
   });
-  const ExperienceId = IDL.Nat;
+  const ContactId = IDL.Nat;
   const Experience = IDL.Record({
-    'id' : ExperienceId,
+    'id' : Id,
     'title' : IDL.Text,
     'duration' : IDL.Text,
     'sortOrder' : IDL.Nat,
     'description' : IDL.Text,
     'company' : IDL.Text,
   });
-  const ProjectId = IDL.Nat;
+  const ExperienceId = IDL.Nat;
   const Category__1 = IDL.Variant({
     'web' : IDL.Null,
     'mobile' : IDL.Null,
     'backend' : IDL.Null,
   });
   const Project = IDL.Record({
-    'id' : ProjectId,
+    'id' : Id,
     'title' : IDL.Text,
     'sortOrder' : IDL.Nat,
     'tags' : IDL.Vec(IDL.Text),
@@ -254,15 +255,15 @@ export const idlFactory = ({ IDL }) => {
     'category' : Category__1,
     'liveUrl' : IDL.Text,
   });
-  const ServiceId = IDL.Nat;
+  const ProjectId = IDL.Nat;
   const Service = IDL.Record({
-    'id' : ServiceId,
+    'id' : Id,
     'title' : IDL.Text,
     'sortOrder' : IDL.Nat,
     'icon' : IDL.Text,
     'description' : IDL.Text,
   });
-  const SkillId = IDL.Nat;
+  const ServiceId = IDL.Nat;
   const Category = IDL.Variant({
     'security' : IDL.Null,
     'secondary' : IDL.Null,
@@ -270,24 +271,24 @@ export const idlFactory = ({ IDL }) => {
     'additional' : IDL.Null,
   });
   const Skill = IDL.Record({
-    'id' : SkillId,
+    'id' : Id,
     'sortOrder' : IDL.Nat,
     'icon' : IDL.Text,
     'name' : IDL.Text,
     'level' : IDL.Nat,
     'category' : Category,
   });
-  const SocialLinkId = IDL.Nat;
+  const SkillId = IDL.Nat;
   const SocialLink = IDL.Record({
-    'id' : SocialLinkId,
+    'id' : Id,
     'url' : IDL.Text,
     'sortOrder' : IDL.Nat,
     'platform' : IDL.Text,
     'isActive' : IDL.Bool,
   });
-  const TestimonialId = IDL.Nat;
+  const SocialLinkId = IDL.Nat;
   const Testimonial = IDL.Record({
-    'id' : TestimonialId,
+    'id' : Id,
     'content' : IDL.Text,
     'sortOrder' : IDL.Nat,
     'name' : IDL.Text,
@@ -296,6 +297,7 @@ export const idlFactory = ({ IDL }) => {
     'avatarUrl' : IDL.Text,
     'rating' : IDL.Nat,
   });
+  const TestimonialId = IDL.Nat;
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const SeoSettings = IDL.Record({
     'metaDescription' : IDL.Text,

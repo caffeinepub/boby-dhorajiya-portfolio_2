@@ -68,11 +68,12 @@ export default function Contact() {
         name: form.name.trim(),
         email: form.email.trim(),
         message: form.message.trim(),
-        createdAt: BigInt(Date.now() * 1_000_000),
+        createdAt: BigInt(Date.now()) * 1_000_000n,
       });
       setSubmitted(true);
       toast.success("Message sent! I'll get back to you soon.");
-    } catch {
+    } catch (err) {
+      console.error("Failed to send contact message:", err);
       toast.error("Failed to send message. Please try again.");
     }
   };
