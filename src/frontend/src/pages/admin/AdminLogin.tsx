@@ -1,16 +1,54 @@
 import { Button } from "@/components/ui/button";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
+import { getUrlParameter, storeSessionParameter } from "@/utils/urlParams";
 import { useNavigate } from "@tanstack/react-router";
 import { Code2, Loader2, Shield } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect } from "react";
+
+// Read the admin token from all possible URL sources and persist to sessionStorage
+// so useActor can find it when creating the authenticated actor after II login.
+function persistAdminTokenFromUrl(): void {
+  const TOKEN_KEY = "caffeineAdminToken";
+
+  // Check regular query string (?caffeineAdminToken=...)
+  const queryToken = new URLSearchParams(window.location.search).get(TOKEN_KEY);
+  if (queryToken) {
+    storeSessionParameter(TOKEN_KEY, queryToken);
+    return;
+  }
+
+  // Check hash query string (#/path?caffeineAdminToken=...)
+  const hash = window.location.hash;
+  const qIdx = hash.indexOf("?");
+  if (qIdx !== -1) {
+    const hashParams = new URLSearchParams(hash.substring(qIdx + 1));
+    const hashToken = hashParams.get(TOKEN_KEY);
+    if (hashToken) {
+      storeSessionParameter(TOKEN_KEY, hashToken);
+      return;
+    }
+  }
+
+  // Also try getUrlParameter as a catch-all (handles edge cases)
+  const fallbackToken = getUrlParameter(TOKEN_KEY);
+  if (fallbackToken) {
+    storeSessionParameter(TOKEN_KEY, fallbackToken);
+  }
+}
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const { login, isLoggingIn, isLoginSuccess, isInitializing, identity } =
     useInternetIdentity();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
+
+  // On mount, capture admin token from URL into sessionStorage so useActor
+  // can use it when creating the authenticated actor after login completes.
+  useEffect(() => {
+    persistAdminTokenFromUrl();
+  }, []);
 
   useEffect(() => {
     if (isLoginSuccess && isAdmin === true) {
@@ -27,6 +65,8 @@ export default function AdminLogin() {
   const isAccessDenied = isLoginSuccess && isAdmin === false && !checkingAdmin;
 
   const handleLogin = () => {
+    // Re-run token persistence in case the user arrived late or refreshed
+    persistAdminTokenFromUrl();
     login();
   };
 
@@ -71,8 +111,9 @@ export default function AdminLogin() {
               className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-5 text-sm text-destructive"
               data-ocid="admin.error_state"
             >
-              Access denied. Your account does not have admin permissions.
-              Please contact the site owner to grant admin access.
+              Access denied. Please open this app from the Caffeine dashboard to
+              get admin access. Your Internet Identity principal has not been
+              granted admin permissions yet.
             </motion.div>
           )}
 
