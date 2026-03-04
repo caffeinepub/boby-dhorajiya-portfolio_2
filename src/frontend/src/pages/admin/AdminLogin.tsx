@@ -1,20 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
-import { storeSessionParameter } from "@/utils/urlParams";
 import { useNavigate } from "@tanstack/react-router";
-import { Code2, KeyRound, Loader2, Shield } from "lucide-react";
+import { Code2, Loader2, Shield } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const { login, isLoggingIn, isLoginSuccess, isInitializing, identity } =
     useInternetIdentity();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
-  const [adminToken, setAdminToken] = useState("");
 
   useEffect(() => {
     if (isLoginSuccess && isAdmin === true) {
@@ -31,9 +27,6 @@ export default function AdminLogin() {
   const isAccessDenied = isLoginSuccess && isAdmin === false && !checkingAdmin;
 
   const handleLogin = () => {
-    if (adminToken.trim()) {
-      storeSessionParameter("caffeineAdminToken", adminToken.trim());
-    }
     login();
   };
 
@@ -70,41 +63,6 @@ export default function AdminLogin() {
             </p>
           </div>
 
-          {/* Admin Token Field — shown only when not yet logged in */}
-          {!isLoginSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mb-5"
-            >
-              <Label
-                htmlFor="admin-token"
-                className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-2"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-cyan" />
-                Admin Token
-              </Label>
-              <Input
-                id="admin-token"
-                type="password"
-                placeholder="Enter your admin token"
-                value={adminToken}
-                onChange={(e) => setAdminToken(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isLoggingIn && !checkingAdmin) {
-                    handleLogin();
-                  }
-                }}
-                className="bg-background/50 border-border/60 focus:border-primary/60 placeholder:text-muted-foreground/50"
-                data-ocid="admin.input"
-              />
-              <p className="text-xs text-muted-foreground mt-1.5">
-                Required to claim admin privileges on first login.
-              </p>
-            </motion.div>
-          )}
-
           {/* Access denied message */}
           {isAccessDenied && (
             <motion.div
@@ -113,8 +71,8 @@ export default function AdminLogin() {
               className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-5 text-sm text-destructive"
               data-ocid="admin.error_state"
             >
-              Access denied. Make sure you entered the correct admin token
-              before logging in.
+              Access denied. Your account does not have admin permissions.
+              Please contact the site owner to grant admin access.
             </motion.div>
           )}
 
