@@ -3,15 +3,17 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
 import "../index.css";
-// Eagerly capture the admin token from the URL and persist it to sessionStorage
-// BEFORE React renders anything, so it is available even when the router
-// redirects away from the landing URL (e.g. /admin → /admin/dashboard).
 import { getSecretParameter } from "./utils/urlParams";
-getSecretParameter("caffeineAdminToken");
 
 BigInt.prototype.toJSON = function () {
   return this.toString();
 };
+
+// Capture the admin token immediately at app startup before any routing
+// happens. The Caffeine dashboard appends it as a query string and/or
+// hash param; reading it here stores it in sessionStorage so every
+// subsequent call to getSecretParameter("caffeineAdminToken") succeeds.
+getSecretParameter("caffeineAdminToken");
 
 declare global {
   interface BigInt {
