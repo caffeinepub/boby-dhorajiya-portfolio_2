@@ -197,18 +197,50 @@ export function getSecretFromHash(paramName: string): string | null {
 }
 
 /**
- * Gets a secret parameter with fallback chain: hash -> sessionStorage
- * This is the recommended way to handle sensitive parameters like admin tokens
+ * Gets a secret parameter with fallback chain:
+ *   sessionStorage -> query string -> hash query string -> raw hash value
  *
- * Security benefits over regular URL params:
- * - Hash fragments are not sent to the server
- * - Not logged in server access logs
- * - Not sent in HTTP Referer headers
- * - Automatically cleared from URL after extraction
+ * This is the recommended way to handle sensitive parameters like admin tokens.
+ * Always checks sessionStorage first so previously captured tokens survive navigation.
  *
  * @param paramName - The name of the secret parameter
  * @returns The secret value if found, null otherwise
  */
 export function getSecretParameter(paramName: string): string | null {
-  return getSecretFromHash(paramName);
+  // 1. Check sessionStorage first — fastest path, survives navigation
+  const stored = getSessionParameter(paramName);
+  if (stored) return stored;
+
+  // 2. Check regular query string (?caffeineAdminToken=...)
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryValue = urlParams.get(paramName);
+  if (queryValue) {
+    storeSessionParameter(paramName, queryValue);
+    return queryValue;
+  }
+
+  // 3. Check hash query string (#/path?caffeineAdminToken=...)
+  const hash = window.location.hash;
+  const qIdx = hash.indexOf("?");
+  if (qIdx !== -1) {
+    const hashParams = new URLSearchParams(hash.substring(qIdx + 1));
+    const hashQueryValue = hashParams.get(paramName);
+    if (hashQueryValue) {
+      storeSessionParameter(paramName, hashQueryValue);
+      return hashQueryValue;
+    }
+  }
+
+  // 4. Check raw hash fragment (#caffeineAdminToken=...)
+  if (hash && hash.length > 1) {
+    const rawHash = hash.substring(1);
+    const rawParams = new URLSearchParams(rawHash);
+    const rawValue = rawParams.get(paramName);
+    if (rawValue) {
+      storeSessionParameter(paramName, rawValue);
+      return rawValue;
+    }
+  }
+
+  return null;
 }

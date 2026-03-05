@@ -3,46 +3,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
-import {
-  getSessionParameter,
-  getUrlParameter,
-  storeSessionParameter,
-} from "@/utils/urlParams";
+import { getSecretParameter, storeSessionParameter } from "@/utils/urlParams";
 import { useNavigate } from "@tanstack/react-router";
 import { Code2, Key, Loader2, Shield } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
-// Read the admin token from all possible URL sources and persist to sessionStorage
-// so useActor can find it when creating the authenticated actor after II login.
-function persistAdminTokenFromUrl(): void {
-  const TOKEN_KEY = "caffeineAdminToken";
-
-  // Check regular query string (?caffeineAdminToken=...)
-  const queryToken = new URLSearchParams(window.location.search).get(TOKEN_KEY);
-  if (queryToken) {
-    storeSessionParameter(TOKEN_KEY, queryToken);
-    return;
-  }
-
-  // Check hash query string (#/path?caffeineAdminToken=...)
-  const hash = window.location.hash;
-  const qIdx = hash.indexOf("?");
-  if (qIdx !== -1) {
-    const hashParams = new URLSearchParams(hash.substring(qIdx + 1));
-    const hashToken = hashParams.get(TOKEN_KEY);
-    if (hashToken) {
-      storeSessionParameter(TOKEN_KEY, hashToken);
-      return;
-    }
-  }
-
-  // Also try getUrlParameter as a catch-all (handles edge cases)
-  const fallbackToken = getUrlParameter(TOKEN_KEY);
-  if (fallbackToken) {
-    storeSessionParameter(TOKEN_KEY, fallbackToken);
-  }
-}
+const TOKEN_KEY = "caffeineAdminToken";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -50,20 +17,15 @@ export default function AdminLogin() {
     useInternetIdentity();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
 
-  const TOKEN_KEY = "caffeineAdminToken";
-
-  // Initialise field from sessionStorage (already captured at app root) or URL
+  // Initialise field — getSecretParameter checks sessionStorage then all URL sources
   const [adminToken, setAdminToken] = useState<string>(() => {
-    return getSessionParameter(TOKEN_KEY) ?? getUrlParameter(TOKEN_KEY) ?? "";
+    return getSecretParameter(TOKEN_KEY) ?? "";
   });
 
-  // On mount, capture admin token from URL into sessionStorage so useActor
-  // can use it when creating the authenticated actor after login completes.
+  // On mount, re-run capture in case the URL has a token that wasn't in sessionStorage yet.
   useEffect(() => {
-    persistAdminTokenFromUrl();
-    // Sync field value with whatever was captured
-    const stored = getSessionParameter(TOKEN_KEY);
-    if (stored) setAdminToken(stored);
+    const captured = getSecretParameter(TOKEN_KEY);
+    if (captured) setAdminToken(captured);
   }, []);
 
   // Keep sessionStorage in sync when the user types in the field
@@ -90,8 +52,7 @@ export default function AdminLogin() {
     !isInitializing;
 
   const handleLogin = () => {
-    // Persist whatever token the user has entered (or what was captured from URL)
-    persistAdminTokenFromUrl();
+    // Ensure whatever is in the field is persisted before triggering login
     if (adminToken.trim()) {
       storeSessionParameter(TOKEN_KEY, adminToken.trim());
     }
