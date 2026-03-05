@@ -15,11 +15,10 @@ declare global {
   }
 }
 
-// Capture the admin token from the URL at startup — before any routing or
-// actor creation. The Caffeine dashboard appends ?caffeineAdminToken=xxx to
-// the URL. If we don't grab it here, routes that redirect away (e.g. /admin
-// → /admin/dashboard) will navigate before the login page or actor hook
-// has a chance to read it.
+// Capture the Caffeine admin token from the URL at app startup — before any
+// routing happens. This is critical because /admin redirects immediately to
+// /admin/dashboard (bypassing the login page), so the token must be read and
+// persisted to sessionStorage here, not inside any page component.
 getSecretParameter("caffeineAdminToken");
 
 const queryClient = new QueryClient();
