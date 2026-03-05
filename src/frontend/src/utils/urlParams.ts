@@ -197,62 +197,31 @@ export function getSecretFromHash(paramName: string): string | null {
 }
 
 /**
- * Gets a secret parameter with fallback chain:
- *   sessionStorage -> regular query string -> hash query string -> raw hash
+ * Gets a secret parameter with fallback chain: hash -> sessionStorage
+ * This is the recommended way to handle sensitive parameters like admin tokens
  *
- * The Caffeine dashboard injects the admin token as a regular query string
- * (?caffeineAdminToken=xxx), so we must check there first before the hash.
+ * Security benefits over regular URL params:
+ * - Hash fragments are not sent to the server
+ * - Not logged in server access logs
+ * - Not sent in HTTP Referer headers
+ * - Automatically cleared from URL after extraction
  *
  * @param paramName - The name of the secret parameter
  * @returns The secret value if found, null otherwise
  */
 export function getSecretParameter(paramName: string): string | null {
-  // 1. Check sessionStorage first (already captured in a previous call)
+  // Check sessionStorage first
   const stored = getSessionParameter(paramName);
   if (stored) return stored;
 
-  // 2. Regular query string (?caffeineAdminToken=xxx) — Caffeine dashboard injects it here
-  const queryParams = new URLSearchParams(window.location.search);
-  const fromQuery = queryParams.get(paramName);
-  if (fromQuery) {
-    storeSessionParameter(paramName, fromQuery);
-    // Remove from URL bar so it's not visible in history
-    try {
-      queryParams.delete(paramName);
-      const cleaned =
-        window.location.pathname +
-        (queryParams.toString() ? `?${queryParams.toString()}` : "") +
-        window.location.hash;
-      window.history.replaceState(null, "", cleaned);
-    } catch (_) {
-      // ignore
-    }
-    return fromQuery;
+  // Check regular query string (Caffeine platform injects token here)
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryParam = urlParams.get(paramName);
+  if (queryParam) {
+    storeSessionParameter(paramName, queryParam);
+    return queryParam;
   }
 
-  // 3. Hash query string (#/route?caffeineAdminToken=xxx)
-  const hash = window.location.hash;
-  if (hash && hash.length > 1) {
-    const qIdx = hash.indexOf("?");
-    if (qIdx !== -1) {
-      const hashParams = new URLSearchParams(hash.substring(qIdx + 1));
-      const fromHash = hashParams.get(paramName);
-      if (fromHash) {
-        storeSessionParameter(paramName, fromHash);
-        clearParamFromHash(paramName);
-        return fromHash;
-      }
-    }
-
-    // 4. Raw hash fragment (#caffeineAdminToken=xxx)
-    const rawHash = new URLSearchParams(hash.substring(1));
-    const fromRaw = rawHash.get(paramName);
-    if (fromRaw) {
-      storeSessionParameter(paramName, fromRaw);
-      clearParamFromHash(paramName);
-      return fromRaw;
-    }
-  }
-
-  return null;
+  // Fall back to hash-based extraction
+  return getSecretFromHash(paramName);
 }

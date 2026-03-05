@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import * as adminAuth from "@/hooks/useAdminAuth";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { useIsCallerAdmin } from "@/hooks/useQueries";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   BookOpen,
@@ -12,7 +12,6 @@ import {
   HelpCircle,
   LayoutDashboard,
   Link2,
-  Loader2,
   LogOut,
   Mail,
   Menu,
@@ -45,50 +44,23 @@ export function AdminLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { clear: clearII } = useInternetIdentity();
 
-  const {
-    identity,
-    isInitializing: iiInitializing,
-    clear: clearII,
-  } = useInternetIdentity();
-
-  const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
-
+  // Redirect to login if not authenticated
   useEffect(() => {
-    // Still initializing II — wait
-    if (iiInitializing) return;
-
-    // No identity — go to login
-    if (!identity) {
-      void navigate({ to: "/admin/login" });
-      return;
-    }
-
-    // Admin check still running — wait
-    if (checkingAdmin) return;
-
-    // Definitely not admin
-    if (isAdmin === false) {
+    if (!adminAuth.isAuthenticated()) {
       void navigate({ to: "/admin/login" });
     }
-  }, [identity, isAdmin, iiInitializing, checkingAdmin, navigate]);
+  }, [navigate]);
 
-  // Show spinner while initializing or admin check pending
-  const stillLoading = iiInitializing || !identity || checkingAdmin;
-
-  if (stillLoading) {
-    return (
-      <div className="min-h-screen bg-navy flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-cyan" />
-      </div>
-    );
+  // Don't render anything if not authenticated
+  if (!adminAuth.isAuthenticated()) {
+    return null;
   }
 
-  // If not admin, render nothing (redirect effect will fire)
-  if (!isAdmin) return null;
-
   const handleLogout = () => {
-    clearII();
+    adminAuth.logout();
+    clearII(); // also clear Internet Identity session
     void navigate({ to: "/admin/login" });
   };
 

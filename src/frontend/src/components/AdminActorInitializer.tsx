@@ -1,5 +1,4 @@
-// This component is no longer used — admin actor initialization is handled
-// directly in useActor.ts via getSecretParameter("caffeineAdminToken").
+// Admin actor is initialized via useActor.ts when Internet Identity is used.
 export function AdminActorInitializer() {
   return null;
 }

@@ -1,75 +1,77 @@
+import * as adminAuth from "@/hooks/useAdminAuth";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { useIsCallerAdmin } from "@/hooks/useQueries";
-import { getSecretParameter, storeSessionParameter } from "@/utils/urlParams";
 import { useNavigate } from "@tanstack/react-router";
-import { Code2, Key, Loader2, LogIn, Shield } from "lucide-react";
+import { Code2, Eye, EyeOff, Loader2, Lock, Mail, Shield } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
+type Step = "credentials" | "identity" | "done";
+
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [adminToken, setAdminToken] = useState<string>(() => {
-    // Pre-fill from sessionStorage or URL — getSecretParameter handles all sources
-    return getSecretParameter("caffeineAdminToken") ?? "";
-  });
-
   const {
-    login,
+    login: iiLogin,
     isLoggingIn,
     isLoginError,
-    loginError: iiLoginError,
+    loginError,
     identity,
-    isInitializing,
   } = useInternetIdentity();
 
-  // Backend admin check — runs once identity is available
-  const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<Step>("credentials");
 
-  // Redirect to dashboard once admin is confirmed
+  // Once II login succeeds and identity is set, mark admin auth and redirect
   useEffect(() => {
-    if (identity && !checkingAdmin && isAdmin === true) {
+    if (
+      step === "identity" &&
+      identity &&
+      !identity.getPrincipal().isAnonymous()
+    ) {
+      adminAuth.login(email, password); // store session flag
+      setStep("done");
       void navigate({ to: "/admin/dashboard" });
     }
-  }, [identity, isAdmin, checkingAdmin, navigate]);
+  }, [identity, step, navigate, email, password]);
 
-  // Show helpful error when identity is set but not admin
+  // Handle II login error
   useEffect(() => {
-    if (identity && !checkingAdmin && isAdmin === false) {
-      setLoginError(
-        "Access denied. Your Internet Identity is not registered as admin.\n\nIf you have the admin token, paste it in the field above and try logging in again.",
-      );
+    if (step === "identity" && isLoginError && loginError) {
+      setError("Internet Identity login failed. Please try again.");
+      setStep("credentials");
+      setLoading(false);
     }
-  }, [identity, isAdmin, checkingAdmin]);
+  }, [isLoginError, loginError, step]);
 
-  // Show II login errors
-  useEffect(() => {
-    if (isLoginError && iiLoginError) {
-      setLoginError(iiLoginError.message || "Login failed. Please try again.");
-    }
-  }, [isLoginError, iiLoginError]);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  const handleLogin = () => {
-    setLoginError(null);
-    // Save whatever token is in the input field to sessionStorage before login
-    const token = adminToken.trim();
-    if (token) {
-      storeSessionParameter("caffeineAdminToken", token);
-    } else {
-      // Try to pick up from URL one more time in case it was missed
-      getSecretParameter("caffeineAdminToken");
+    // Small delay for UX
+    await new Promise((r) => setTimeout(r, 300));
+
+    const valid =
+      email.trim().toLowerCase() === "bobydhorajiya@gmail.com" &&
+      password === "Admin@9201";
+
+    if (!valid) {
+      setLoading(false);
+      setError("Incorrect email or password. Please try again.");
+      return;
     }
-    login();
+
+    // Credentials correct — now trigger Internet Identity login
+    // so we get a real principal that can be registered as admin in the backend
+    setStep("identity");
+    setLoading(false);
+    iiLogin();
   };
 
-  const isVerifying = !!identity && checkingAdmin;
-  const showSpinner = isInitializing || isLoggingIn || isVerifying;
-
-  const spinnerLabel = isVerifying
-    ? "Verifying admin access..."
-    : isLoggingIn
-      ? "Opening Internet Identity..."
-      : "Initializing...";
+  const isProcessing = loading || isLoggingIn || step === "identity";
 
   return (
     <div className="min-h-screen bg-navy flex items-center justify-center relative overflow-hidden">
@@ -89,89 +91,136 @@ export default function AdminLogin() {
               <Code2 className="w-7 h-7 text-cyan" />
             </div>
             <h1 className="font-display text-2xl font-bold text-foreground mb-1">
-              Admin Access
+              Admin Login
             </h1>
             <p className="text-sm text-muted-foreground text-center">
-              {showSpinner
-                ? spinnerLabel
-                : "Sign in with Internet Identity to continue"}
+              Sign in to manage your portfolio
             </p>
           </div>
 
           {/* Security badge */}
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/15 mb-5">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/15 mb-6">
             <Shield className="w-4 h-4 text-cyan shrink-0" />
             <p className="text-xs text-muted-foreground">
-              Secured with Internet Identity — only the registered admin can
-              access this panel
+              {step === "identity"
+                ? "Verifying identity — please approve the popup..."
+                : "Admin access only — unauthorized access is not permitted"}
             </p>
           </div>
 
-          {/* Admin token input */}
-          <div className="mb-5">
-            <label
-              htmlFor="admin-token"
-              className="block text-xs font-medium text-muted-foreground mb-1.5"
-            >
-              Admin Token{" "}
-              <span className="text-muted-foreground/50">(required)</span>
-            </label>
-            <div className="relative">
-              <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
-              <input
-                id="admin-token"
-                type="password"
-                value={adminToken}
-                onChange={(e) => setAdminToken(e.target.value)}
-                placeholder="Paste your admin token here"
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-background border border-border text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
-                data-ocid="admin.token.input"
-                autoComplete="off"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground/50 mt-1">
-              Find your token in the Caffeine dashboard under project settings.
-            </p>
-          </div>
-
-          {/* Error */}
-          {loginError && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-5 text-sm text-destructive"
-              data-ocid="admin.error_state"
-            >
-              <p className="font-semibold">Access denied.</p>
-              <p className="mt-1 text-xs whitespace-pre-line">{loginError}</p>
-            </motion.div>
-          )}
-
-          {/* Spinner / Login button */}
-          {showSpinner ? (
+          {step === "identity" ? (
             <div
-              className="flex flex-col items-center gap-3 py-4"
+              className="flex flex-col items-center gap-4 py-6"
               data-ocid="admin.loading_state"
             >
-              <Loader2 className="w-6 h-6 text-cyan animate-spin" />
-              <p className="text-xs text-muted-foreground">{spinnerLabel}</p>
+              <Loader2 className="w-8 h-8 animate-spin text-cyan" />
+              <p className="text-sm text-muted-foreground text-center">
+                A verification popup has appeared. Please approve it to
+                continue.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("credentials");
+                  setError(null);
+                }}
+                className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+              >
+                Cancel and go back
+              </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={handleLogin}
-              disabled={isLoggingIn}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              data-ocid="admin.primary_button"
-            >
-              <LogIn className="w-4 h-4" />
-              Login with Internet Identity
-            </button>
-          )}
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="admin-email"
+                  className="block text-xs font-medium text-muted-foreground mb-1.5"
+                >
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+                  <input
+                    id="admin-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                    autoComplete="email"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-background border border-border text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                    data-ocid="admin.email.input"
+                  />
+                </div>
+              </div>
 
-          <p className="text-xs text-muted-foreground/50 text-center mt-4">
-            Only the registered admin identity can access this panel
-          </p>
+              {/* Password */}
+              <div>
+                <label
+                  htmlFor="admin-password"
+                  className="block text-xs font-medium text-muted-foreground mb-1.5"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+                  <input
+                    id="admin-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    autoComplete="current-password"
+                    className="w-full pl-9 pr-10 py-2.5 rounded-lg bg-background border border-border text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                    data-ocid="admin.password.input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive"
+                  data-ocid="admin.error_state"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+                data-ocid="admin.submit_button"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </button>
+            </form>
+          )}
         </div>
       </motion.div>
     </div>
