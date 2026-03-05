@@ -5,8 +5,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useGetAllTestimonials } from "@/hooks/useQueries";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -15,11 +17,15 @@ import {
   Code2,
   Lock,
   MessageSquare,
+  Quote,
   Shield,
   Smartphone,
+  Star,
+  Users,
   Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
+import type { Testimonial } from "../backend.d";
 
 const container = {
   hidden: { opacity: 0 },
@@ -590,6 +596,8 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── TESTIMONIALS ─────────────────────────────────── */}
+      <TestimonialsSection />
       {/* ─── CTA BANNER ──────────────────────────────────────── */}
       <section className="py-20 md:py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-electric/10 pointer-events-none" />
@@ -679,5 +687,148 @@ export default function Home() {
         </div>
       </section>
     </div>
+  );
+}
+
+const defaultTestimonials: Testimonial[] = [
+  {
+    id: 1n,
+    name: "Priya Sharma",
+    role: "Product Manager",
+    company: "FinTech Innovations",
+    content:
+      "Boby delivered a Flutter app that exceeded our security requirements. The implementation of biometric auth and encrypted storage was flawless.",
+    avatarUrl: "",
+    rating: 5n,
+    sortOrder: 1n,
+  },
+  {
+    id: 2n,
+    name: "Marcus Johnson",
+    role: "CTO",
+    company: "HealthTrack App",
+    content:
+      "Best React Native developer I've worked with. Clean architecture, zero security vulnerabilities, and delivered ahead of schedule.",
+    avatarUrl: "",
+    rating: 5n,
+    sortOrder: 2n,
+  },
+  {
+    id: 3n,
+    name: "Anita Patel",
+    role: "Founder",
+    company: "SecureVault",
+    content:
+      "Boby rebuilt our legacy Android app in Flutter with enterprise-grade security. The performance improvement was dramatic.",
+    avatarUrl: "",
+    rating: 5n,
+    sortOrder: 3n,
+  },
+];
+
+function TestimonialsSection() {
+  const { data: testimonials = [] } = useGetAllTestimonials();
+  const displayTestimonials =
+    testimonials.length > 0 ? testimonials : defaultTestimonials;
+  return (
+    <section className="py-20 md:py-28 relative overflow-hidden">
+      <div className="absolute inset-0 bg-dots opacity-15 pointer-events-none" />
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-xs font-medium text-cyan mb-4">
+            <Users className="w-3.5 h-3.5" />
+            Client Feedback
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+            What Clients Say
+          </h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Hear from the people I've worked with — delivering secure,
+            performant, and beautiful mobile applications.
+          </p>
+        </motion.div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayTestimonials
+            .sort((a, b) => Number(a.sortOrder) - Number(b.sortOrder))
+            .slice(0, 3)
+            .map((t, i) => {
+              const initials = t.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase();
+              return (
+                <motion.div
+                  key={t.id.toString()}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  whileHover={{ y: -4 }}
+                  className="p-6 rounded-xl border border-border bg-card hover:border-primary/30 hover:glow-cyan transition-all duration-300 group flex flex-col"
+                >
+                  <Quote className="w-8 h-8 text-primary/30 mb-4 group-hover:text-primary/50 transition-colors" />
+                  {/* Star rating */}
+                  <div className="flex gap-0.5 mb-3">
+                    {[0, 1, 2, 3, 4].map((s) => (
+                      <Star
+                        key={s}
+                        className={`w-4 h-4 ${
+                          s < Number(t.rating)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground/30"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed flex-1 italic">
+                    &quot;{t.content}&quot;
+                  </p>
+                  <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border">
+                    <Avatar className="w-9 h-9">
+                      {t.avatarUrl && (
+                        <AvatarImage src={t.avatarUrl} alt={t.name} />
+                      )}
+                      <AvatarFallback className="bg-primary/15 text-cyan text-xs font-bold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-display font-semibold text-sm text-foreground">
+                        {t.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t.role} &middot; {t.company}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mt-10"
+        >
+          <Button
+            asChild
+            variant="outline"
+            className="border-border hover:border-primary/50 hover:bg-primary/5 hover:text-cyan transition-all"
+          >
+            <Link to="/testimonials">
+              View All Testimonials
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Link>
+          </Button>
+        </motion.div>
+      </div>
+    </section>
   );
 }

@@ -50,6 +50,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   useCreateProject,
   useDeleteProject,
+  useGetAllCategories,
   useGetAllProjectsAdmin,
   useUpdateProject,
 } from "@/hooks/useQueries";
@@ -74,6 +75,17 @@ const emptyProject: Omit<Project, "id"> = {
 
 export default function AdminProjects() {
   const { data: projects = [], isLoading } = useGetAllProjectsAdmin();
+  const { data: customCategories = [] } = useGetAllCategories();
+  // Built-in categories + custom categories from admin
+  const allCategories = [
+    { value: Category__1.mobile, label: "Mobile" },
+    { value: Category__1.web, label: "Web" },
+    { value: Category__1.backend, label: "Backend" },
+    ...customCategories.map((c) => ({
+      value: c.name.toLowerCase(),
+      label: c.name,
+    })),
+  ];
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
@@ -349,9 +361,11 @@ export default function AdminProjects() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={Category__1.mobile}>Mobile</SelectItem>
-                    <SelectItem value={Category__1.web}>Web</SelectItem>
-                    <SelectItem value={Category__1.backend}>Backend</SelectItem>
+                    {allCategories.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

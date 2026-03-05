@@ -3,14 +3,14 @@ import { SkeletonCards } from "@/components/shared/SkeletonCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGetActiveProjects } from "@/hooks/useQueries";
+import { useGetActiveProjects, useGetAllCategories } from "@/hooks/useQueries";
 import { Category__1 } from "@/hooks/useQueries";
 import { ExternalLink, Folder, Github } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import type { Project } from "../backend.d";
 
-const filterCategories = [
+const builtInCategories = [
   { value: "all", label: "All" },
   { value: Category__1.mobile, label: "Mobile" },
   { value: Category__1.web, label: "Web" },
@@ -116,6 +116,15 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 export default function Projects() {
   const [activeFilter, setActiveFilter] = useState("all");
   const { data: projects = [], isLoading } = useGetActiveProjects();
+  const { data: customCategories = [] } = useGetAllCategories();
+  // Merge built-in + custom categories for filter tabs
+  const filterCategories = [
+    ...builtInCategories,
+    ...customCategories.map((c) => ({
+      value: c.name.toLowerCase(),
+      label: c.name,
+    })),
+  ];
 
   const filtered =
     activeFilter === "all"

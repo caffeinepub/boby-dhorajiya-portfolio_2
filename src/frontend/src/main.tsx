@@ -5,9 +5,13 @@ import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
 import "../index.css";
 import { getSecretParameter } from "./utils/urlParams";
 
-// Capture the Caffeine admin token from the URL at startup, before any routing.
-// This ensures the token is in sessionStorage even when /admin redirects straight
-// to /admin/dashboard (bypassing the login page entirely).
+// Capture the admin token from the URL at app startup, before any routing
+// or actor creation. This is critical because:
+// - The Caffeine dashboard injects the token as ?caffeineAdminToken=xxx
+// - /admin redirects immediately to /admin/dashboard, bypassing the login
+//   page where the token was previously being captured
+// - By capturing it here first, it's always in sessionStorage when useActor
+//   calls getSecretParameter("caffeineAdminToken")
 getSecretParameter("caffeineAdminToken");
 
 BigInt.prototype.toJSON = function () {
