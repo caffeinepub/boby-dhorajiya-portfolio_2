@@ -656,7 +656,7 @@ actor {
     // Validate authorization: caller must be admin OR token must match environment variable
     let isCallerAdmin = AccessControl.isAdmin(accessControlState, caller);
     
-    let tokenValid = switch (Prim.envVar("CAFFEINE_ADMIN_TOKEN")) {
+    let tokenValid = switch (Prim.envVar<system>("CAFFEINE_ADMIN_TOKEN")) {
       case null { false };
       case (?envToken) { adminToken == envToken };
     };

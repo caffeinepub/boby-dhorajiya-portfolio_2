@@ -55,7 +55,7 @@ export function AdminLayout() {
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
 
   useEffect(() => {
-    // Still initializing — wait
+    // Still initializing II — wait
     if (iiInitializing) return;
 
     // No identity — go to login
@@ -64,8 +64,8 @@ export function AdminLayout() {
       return;
     }
 
-    // Identity present but admin check not done yet — wait
-    if (checkingAdmin || isAdmin === undefined) return;
+    // Admin check still running — wait
+    if (checkingAdmin) return;
 
     // Definitely not admin
     if (isAdmin === false) {
@@ -74,8 +74,7 @@ export function AdminLayout() {
   }, [identity, isAdmin, iiInitializing, checkingAdmin, navigate]);
 
   // Show spinner while initializing or admin check pending
-  const stillLoading =
-    iiInitializing || !identity || checkingAdmin || isAdmin === undefined;
+  const stillLoading = iiInitializing || !identity || checkingAdmin;
 
   if (stillLoading) {
     return (

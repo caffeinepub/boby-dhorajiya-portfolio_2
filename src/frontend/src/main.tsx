@@ -9,17 +9,18 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
-// Capture the admin token immediately at app startup before any routing
-// happens. The Caffeine dashboard appends it as a query string and/or
-// hash param; reading it here stores it in sessionStorage so every
-// subsequent call to getSecretParameter("caffeineAdminToken") succeeds.
-getSecretParameter("caffeineAdminToken");
-
 declare global {
   interface BigInt {
     toJSON(): string;
   }
 }
+
+// Capture the admin token from the URL at startup — before any routing or
+// actor creation. The Caffeine dashboard appends ?caffeineAdminToken=xxx to
+// the URL. If we don't grab it here, routes that redirect away (e.g. /admin
+// → /admin/dashboard) will navigate before the login page or actor hook
+// has a chance to read it.
+getSecretParameter("caffeineAdminToken");
 
 const queryClient = new QueryClient();
 

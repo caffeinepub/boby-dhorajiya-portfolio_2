@@ -176,22 +176,20 @@ export function useGetSeoSettings() {
 
 export function useIsCallerAdmin() {
   const { actor, isFetching } = useActor();
-  return useQuery<boolean | undefined>({
+  return useQuery<boolean>({
     queryKey: ["isCallerAdmin"],
     queryFn: async () => {
+      if (!actor) return false;
       try {
-        if (!actor) return undefined;
-        return await actor.isCallerAdmin();
+        const result = await actor.isCallerAdmin();
+        return result === true;
       } catch {
-        // Return undefined on error so callers can distinguish
-        // "definitely not admin" (false) from "check failed / still loading" (undefined)
-        return undefined;
+        return false;
       }
     },
     enabled: !!actor && !isFetching,
-    // Allow up to 2 retries with backoff to handle transient network issues
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+    retry: false,
+    staleTime: 0,
   });
 }
 

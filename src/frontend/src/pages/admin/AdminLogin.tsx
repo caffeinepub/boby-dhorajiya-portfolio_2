@@ -32,7 +32,7 @@ export default function AdminLogin() {
   useEffect(() => {
     if (identity && !checkingAdmin && isAdmin === false) {
       setLoginError(
-        "This Internet Identity is not registered as admin. Open the app from the Caffeine dashboard link to register as admin, then try again.",
+        "This Internet Identity is not registered as admin.\n\nTo get admin access:\n1. Open the app from the Caffeine dashboard (not by typing the URL)\n2. Click Login with Internet Identity\n\nThe dashboard link contains your admin token which registers your identity as admin.",
       );
     }
   }, [identity, isAdmin, checkingAdmin]);
@@ -49,7 +49,7 @@ export default function AdminLogin() {
     login();
   };
 
-  const isVerifying = !!identity && (checkingAdmin || isAdmin === undefined);
+  const isVerifying = !!identity && checkingAdmin;
   const showSpinner = isInitializing || isLoggingIn || isVerifying;
 
   const spinnerLabel = isVerifying

@@ -8,36 +8,122 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import { Suspense, lazy } from "react";
+import type React from "react";
+import {
+  Component,
+  type ErrorInfo,
+  type ReactNode,
+  Suspense,
+  lazy,
+} from "react";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { PublicLayout } from "./components/layout/PublicLayout";
 
+// ─── Chunk-load error boundary ────────────────────────────────────────────────
+// When the browser has a stale cached page and a new deployment has different
+// chunk hashes, dynamic imports will fail with "Failed to fetch dynamically
+// imported module". This boundary catches those errors and reloads the page
+// once so the browser fetches the latest assets.
+class ChunkErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error: Error) {
+    const isChunkError =
+      error.message?.includes("Failed to fetch dynamically imported module") ||
+      error.message?.includes("Importing a module script failed") ||
+      error.name === "ChunkLoadError";
+    if (isChunkError) {
+      // Reload once to pick up new chunk hashes
+      if (!sessionStorage.getItem("chunk_reload_attempted")) {
+        sessionStorage.setItem("chunk_reload_attempted", "1");
+        window.location.reload();
+      }
+    }
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("ChunkErrorBoundary caught:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-background text-foreground p-8 text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan" />
+          <p className="text-muted-foreground text-sm">
+            Loading new version… if this persists, please hard-refresh
+            (Ctrl+Shift+R / Cmd+Shift+R).
+          </p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Helper: retry a lazy import once on chunk load failure
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function lazyWithRetry(
+  factory: () => Promise<{ default: React.ComponentType<any> }>,
+) {
+  return lazy(() =>
+    factory().catch((err: Error) => {
+      const isChunk =
+        err.message?.includes("Failed to fetch dynamically imported module") ||
+        err.message?.includes("Importing a module script failed");
+      if (isChunk && !sessionStorage.getItem("chunk_reload_attempted")) {
+        sessionStorage.setItem("chunk_reload_attempted", "1");
+        window.location.reload();
+      }
+      return Promise.reject(err);
+    }),
+  );
+}
+
 // Lazy-loaded public pages
-const Home = lazy(() => import("./pages/Home"));
-const About = lazy(() => import("./pages/About"));
-const Projects = lazy(() => import("./pages/Projects"));
-const Skills = lazy(() => import("./pages/Skills"));
-const Services = lazy(() => import("./pages/Services"));
-const Testimonials = lazy(() => import("./pages/Testimonials"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const Experience = lazy(() => import("./pages/Experience"));
-const Contact = lazy(() => import("./pages/Contact"));
+const Home = lazyWithRetry(() => import("./pages/Home"));
+const About = lazyWithRetry(() => import("./pages/About"));
+const Projects = lazyWithRetry(() => import("./pages/Projects"));
+const Skills = lazyWithRetry(() => import("./pages/Skills"));
+const Services = lazyWithRetry(() => import("./pages/Services"));
+const Testimonials = lazyWithRetry(() => import("./pages/Testimonials"));
+const Blog = lazyWithRetry(() => import("./pages/Blog"));
+const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"));
+const Experience = lazyWithRetry(() => import("./pages/Experience"));
+const Contact = lazyWithRetry(() => import("./pages/Contact"));
 
 // Lazy-loaded admin pages
-const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminProjects = lazy(() => import("./pages/admin/AdminProjects"));
-const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
-const AdminSkills = lazy(() => import("./pages/admin/AdminSkills"));
-const AdminExperience = lazy(() => import("./pages/admin/AdminExperience"));
-const AdminServices = lazy(() => import("./pages/admin/AdminServices"));
-const AdminTestimonials = lazy(() => import("./pages/admin/AdminTestimonials"));
-const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
-const AdminSocialLinks = lazy(() => import("./pages/admin/AdminSocialLinks"));
-const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
-const AdminSEO = lazy(() => import("./pages/admin/AdminSEO"));
-const AdminHelp = lazy(() => import("./pages/admin/AdminHelp"));
+const AdminLogin = lazyWithRetry(() => import("./pages/admin/AdminLogin"));
+const AdminDashboard = lazyWithRetry(
+  () => import("./pages/admin/AdminDashboard"),
+);
+const AdminProjects = lazyWithRetry(
+  () => import("./pages/admin/AdminProjects"),
+);
+const AdminCategories = lazyWithRetry(
+  () => import("./pages/admin/AdminCategories"),
+);
+const AdminSkills = lazyWithRetry(() => import("./pages/admin/AdminSkills"));
+const AdminExperience = lazyWithRetry(
+  () => import("./pages/admin/AdminExperience"),
+);
+const AdminServices = lazyWithRetry(
+  () => import("./pages/admin/AdminServices"),
+);
+const AdminTestimonials = lazyWithRetry(
+  () => import("./pages/admin/AdminTestimonials"),
+);
+const AdminBlog = lazyWithRetry(() => import("./pages/admin/AdminBlog"));
+const AdminSocialLinks = lazyWithRetry(
+  () => import("./pages/admin/AdminSocialLinks"),
+);
+const AdminLeads = lazyWithRetry(() => import("./pages/admin/AdminLeads"));
+const AdminSEO = lazyWithRetry(() => import("./pages/admin/AdminSEO"));
+const AdminHelp = lazyWithRetry(() => import("./pages/admin/AdminHelp"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -350,7 +436,7 @@ declare module "@tanstack/react-router" {
 
 export default function App() {
   return (
-    <>
+    <ChunkErrorBoundary>
       <RouterProvider router={router} />
       <Toaster
         theme="dark"
@@ -363,6 +449,6 @@ export default function App() {
           },
         }}
       />
-    </>
+    </ChunkErrorBoundary>
   );
 }
