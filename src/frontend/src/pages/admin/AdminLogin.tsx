@@ -1,112 +1,65 @@
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
-import { type CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "@tanstack/react-router";
-import { Code2, Loader2, Shield } from "lucide-react";
+import { Code2, Loader2, LogIn, Shield } from "lucide-react";
 import { motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
-
-const ALLOWED_EMAIL = "bobydhorajiya@gmail.com";
+import { useEffect, useState } from "react";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Step 1: Google email gate
   const {
-    isLoggedIn: isGoogleLoggedIn,
-    loginWithCredential,
-    isInitializing: googleInitializing,
-  } = useGoogleAuth();
-
-  // Step 2: Internet Identity for real ICP principal
-  const {
-    login: iiLogin,
-    isLoggingIn: iiLoggingIn,
-    isLoginSuccess: iiSuccess,
+    login,
+    isLoggingIn,
+    isLoginError,
+    loginError: iiLoginError,
     identity,
-    isInitializing: iiInitializing,
+    isInitializing,
   } = useInternetIdentity();
 
-  // Backend admin check — only meaningful once II identity is set
+  // Backend admin check — runs once identity is available
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
 
-  const [error, setError] = useState<string | null>(null);
-
-  // Auto-trigger II login once Google validates the email and II isn't active yet
+  // Redirect to dashboard once admin is confirmed
   useEffect(() => {
-    if (
-      isGoogleLoggedIn &&
-      !identity &&
-      !iiLoggingIn &&
-      !iiInitializing &&
-      !googleInitializing
-    ) {
-      iiLogin();
-    }
-  }, [
-    isGoogleLoggedIn,
-    identity,
-    iiLoggingIn,
-    iiInitializing,
-    googleInitializing,
-    iiLogin,
-  ]);
-
-  // Navigate to dashboard once fully authenticated (Google + II + isAdmin confirmed)
-  useEffect(() => {
-    if (
-      isGoogleLoggedIn &&
-      (iiSuccess || !!identity) &&
-      isAdmin === true &&
-      !checkingAdmin
-    ) {
+    if (identity && !checkingAdmin && isAdmin === true) {
       void navigate({ to: "/admin/dashboard" });
     }
-  }, [isGoogleLoggedIn, iiSuccess, identity, isAdmin, checkingAdmin, navigate]);
+  }, [identity, isAdmin, checkingAdmin, navigate]);
 
-  const handleGoogleSuccess = useCallback(
-    (credentialResponse: CredentialResponse) => {
-      setError(null);
-      const credential = credentialResponse.credential;
-      if (!credential) {
-        setError("No credential returned from Google. Please try again.");
-        return;
-      }
-      const granted = loginWithCredential(credential);
-      if (!granted) {
-        setError(
-          `Access restricted to authorized admin only.\nOnly ${ALLOWED_EMAIL} can access this panel.`,
-        );
-      }
-      // After this, the useEffect above will auto-trigger II login
-    },
-    [loginWithCredential],
-  );
+  // Show helpful error when identity is set but not admin
+  useEffect(() => {
+    if (identity && !checkingAdmin && isAdmin === false) {
+      setLoginError(
+        "This Internet Identity is not registered as admin. Open the app from the Caffeine dashboard link to register as admin, then try again.",
+      );
+    }
+  }, [identity, isAdmin, checkingAdmin]);
 
-  const handleGoogleError = useCallback(() => {
-    setError("Google sign-in failed. Please try again.");
-  }, []);
+  // Show II login errors
+  useEffect(() => {
+    if (isLoginError && iiLoginError) {
+      setLoginError(iiLoginError.message || "Login failed. Please try again.");
+    }
+  }, [isLoginError, iiLoginError]);
 
-  // Determine what UI state we're in
-  const isWaitingForII =
-    isGoogleLoggedIn && (iiLoggingIn || (!identity && !error));
-  const isVerifying =
-    isGoogleLoggedIn && !!identity && (checkingAdmin || isAdmin === undefined);
-  const showSpinner =
-    googleInitializing || iiInitializing || isWaitingForII || isVerifying;
-  const showGoogleButton =
-    !googleInitializing && !iiInitializing && !isGoogleLoggedIn;
+  const handleLogin = () => {
+    setLoginError(null);
+    login();
+  };
+
+  const isVerifying = !!identity && (checkingAdmin || isAdmin === undefined);
+  const showSpinner = isInitializing || isLoggingIn || isVerifying;
 
   const spinnerLabel = isVerifying
     ? "Verifying admin access..."
-    : isWaitingForII
-      ? "Completing authentication..."
+    : isLoggingIn
+      ? "Opening Internet Identity..."
       : "Initializing...";
 
   return (
     <div className="min-h-screen bg-navy flex items-center justify-center relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-primary/8 blur-3xl pointer-events-none" />
 
@@ -128,7 +81,7 @@ export default function AdminLogin() {
             <p className="text-sm text-muted-foreground text-center">
               {showSpinner
                 ? spinnerLabel
-                : "Sign in with your Google account to continue"}
+                : "Sign in with Internet Identity to continue"}
             </p>
           </div>
 
@@ -136,14 +89,13 @@ export default function AdminLogin() {
           <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/15 mb-6">
             <Shield className="w-4 h-4 text-cyan shrink-0" />
             <p className="text-xs text-muted-foreground">
-              {isWaitingForII
-                ? "An Internet Identity popup will appear — approve it to continue"
-                : "Secured with Google OAuth + Internet Identity"}
+              Secured with Internet Identity — only the registered admin can
+              access this panel
             </p>
           </div>
 
-          {/* Error message */}
-          {error && (
+          {/* Error */}
+          {loginError && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -151,11 +103,11 @@ export default function AdminLogin() {
               data-ocid="admin.error_state"
             >
               <p className="font-semibold">Access denied.</p>
-              <p className="mt-1 text-xs whitespace-pre-line">{error}</p>
+              <p className="mt-1 text-xs whitespace-pre-line">{loginError}</p>
             </motion.div>
           )}
 
-          {/* Loading / Google button */}
+          {/* Spinner / Login button */}
           {showSpinner ? (
             <div
               className="flex flex-col items-center gap-3 py-4"
@@ -164,26 +116,21 @@ export default function AdminLogin() {
               <Loader2 className="w-6 h-6 text-cyan animate-spin" />
               <p className="text-xs text-muted-foreground">{spinnerLabel}</p>
             </div>
-          ) : showGoogleButton ? (
-            <div
-              className="flex justify-center"
+          ) : (
+            <button
+              type="button"
+              onClick={handleLogin}
+              disabled={isLoggingIn}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               data-ocid="admin.primary_button"
             >
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                theme="filled_black"
-                size="large"
-                shape="rectangular"
-                text="signin_with"
-                useOneTap={false}
-              />
-            </div>
-          ) : null}
+              <LogIn className="w-4 h-4" />
+              Login with Internet Identity
+            </button>
+          )}
 
-          {/* Hint */}
           <p className="text-xs text-muted-foreground/50 text-center mt-4">
-            Only {ALLOWED_EMAIL} can access the admin panel
+            Only the registered admin identity can access this panel
           </p>
         </div>
       </motion.div>

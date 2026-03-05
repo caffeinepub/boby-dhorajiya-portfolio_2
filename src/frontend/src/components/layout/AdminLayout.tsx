@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
@@ -47,63 +46,36 @@ export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Google = email gate (frontend only)
-  const {
-    isLoggedIn: isGoogleLoggedIn,
-    userEmail,
-    logout: googleLogout,
-    isInitializing: googleInitializing,
-  } = useGoogleAuth();
-
-  // Internet Identity = real ICP principal (needed for backend auth)
   const {
     identity,
     isInitializing: iiInitializing,
     clear: clearII,
   } = useInternetIdentity();
 
-  // Backend admin check — valid only after II identity is set and actor is initialized
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
 
   useEffect(() => {
-    // Wait while either auth system is still initializing
-    if (googleInitializing || iiInitializing) return;
+    // Still initializing — wait
+    if (iiInitializing) return;
 
-    // Google email gate: if not Google-logged-in, go to login
-    if (!isGoogleLoggedIn) {
+    // No identity — go to login
+    if (!identity) {
       void navigate({ to: "/admin/login" });
       return;
     }
 
-    // Google OK but II hasn't completed yet — AdminLogin handles triggering II
-    // Don't redirect; just wait here (AdminLayout's loader covers this)
-    if (!identity) return;
-
-    // Both done — wait for admin check
+    // Identity present but admin check not done yet — wait
     if (checkingAdmin || isAdmin === undefined) return;
 
-    // Confirmed not admin
+    // Definitely not admin
     if (isAdmin === false) {
       void navigate({ to: "/admin/login" });
     }
-  }, [
-    isGoogleLoggedIn,
-    identity,
-    isAdmin,
-    googleInitializing,
-    iiInitializing,
-    checkingAdmin,
-    navigate,
-  ]);
+  }, [identity, isAdmin, iiInitializing, checkingAdmin, navigate]);
 
-  // Show spinner while any auth or admin check is pending
+  // Show spinner while initializing or admin check pending
   const stillLoading =
-    googleInitializing ||
-    iiInitializing ||
-    !isGoogleLoggedIn ||
-    !identity ||
-    checkingAdmin ||
-    isAdmin === undefined;
+    iiInitializing || !identity || checkingAdmin || isAdmin === undefined;
 
   if (stillLoading) {
     return (
@@ -113,8 +85,10 @@ export function AdminLayout() {
     );
   }
 
+  // If not admin, render nothing (redirect effect will fire)
+  if (!isAdmin) return null;
+
   const handleLogout = () => {
-    googleLogout();
     clearII();
     void navigate({ to: "/admin/login" });
   };
@@ -186,7 +160,7 @@ export function AdminLayout() {
         </Button>
         {sidebarOpen && (
           <p className="text-xs text-sidebar-foreground/40 mt-2 px-2 truncate">
-            {userEmail ?? "Boby Dhorajiya"}
+            Boby Dhorajiya
           </p>
         )}
       </div>
@@ -228,7 +202,6 @@ export function AdminLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
         <header className="h-16 border-b border-border bg-card/50 flex items-center px-4 gap-4 shrink-0">
-          {/* Mobile menu toggle */}
           <button
             type="button"
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -237,7 +210,6 @@ export function AdminLayout() {
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Desktop collapse toggle */}
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -252,7 +224,6 @@ export function AdminLayout() {
 
           <Separator orientation="vertical" className="h-6 hidden lg:block" />
 
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="text-foreground font-medium">
               {adminNavLinks.find((l) => isActive(l.to))?.label ?? "Admin"}
@@ -270,7 +241,6 @@ export function AdminLayout() {
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>

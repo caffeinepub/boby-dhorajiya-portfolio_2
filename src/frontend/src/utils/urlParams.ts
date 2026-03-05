@@ -198,52 +198,50 @@ export function getSecretFromHash(paramName: string): string | null {
 
 /**
  * Gets a secret parameter with fallback chain:
- *   1. sessionStorage (fastest, already captured)
- *   2. Regular query string (?param=value)
- *   3. Hash query string (#/route?param=value)
- *   4. Raw hash fragment (#param=value)
+ *   1. sessionStorage (already captured earlier in session)
+ *   2. Regular query string (?caffeineAdminToken=xxx)
+ *   3. Hash query string (#/path?caffeineAdminToken=xxx)
+ *   4. Raw hash fragment (#caffeineAdminToken=xxx)
  *
- * Values found in the URL are automatically saved to sessionStorage.
+ * When found in the URL, the value is persisted to sessionStorage so it
+ * survives client-side navigation (the URL changes but the token is not lost).
  *
  * @param paramName - The name of the secret parameter
  * @returns The secret value if found, null otherwise
  */
 export function getSecretParameter(paramName: string): string | null {
-  // 1. Check sessionStorage first
+  // 1. sessionStorage first — fastest and survives navigation
   const stored = getSessionParameter(paramName);
-  if (stored !== null) {
-    return stored;
-  }
+  if (stored) return stored;
 
-  // 2. Regular query string (?caffeineAdminToken=xxx)
+  // 2. Regular query string: ?caffeineAdminToken=xxx
   const qs = new URLSearchParams(window.location.search);
-  const fromQs = qs.get(paramName);
-  if (fromQs) {
-    storeSessionParameter(paramName, fromQs);
-    return fromQs;
+  const fromQuery = qs.get(paramName);
+  if (fromQuery) {
+    storeSessionParameter(paramName, fromQuery);
+    return fromQuery;
   }
 
-  // 3. Hash query string (#/route?caffeineAdminToken=xxx)
+  // 3. Hash query string: #/some/path?caffeineAdminToken=xxx
   const hash = window.location.hash;
   if (hash && hash.length > 1) {
-    const hashQIdx = hash.indexOf("?");
-    if (hashQIdx !== -1) {
-      const hqs = new URLSearchParams(hash.substring(hashQIdx + 1));
-      const fromHashQ = hqs.get(paramName);
-      if (fromHashQ) {
-        storeSessionParameter(paramName, fromHashQ);
-        clearParamFromHash(paramName);
-        return fromHashQ;
+    const qIdx = hash.indexOf("?");
+    if (qIdx !== -1) {
+      const hashQs = new URLSearchParams(hash.substring(qIdx + 1));
+      const fromHashQuery = hashQs.get(paramName);
+      if (fromHashQuery) {
+        storeSessionParameter(paramName, fromHashQuery);
+        return fromHashQuery;
       }
     }
 
-    // 4. Raw hash (#caffeineAdminToken=xxx)
+    // 4. Raw hash: #caffeineAdminToken=xxx  (no leading slash/path)
     const rawHash = new URLSearchParams(hash.substring(1));
-    const fromRaw = rawHash.get(paramName);
-    if (fromRaw) {
-      storeSessionParameter(paramName, fromRaw);
+    const fromRawHash = rawHash.get(paramName);
+    if (fromRawHash) {
+      storeSessionParameter(paramName, fromRawHash);
       clearParamFromHash(paramName);
-      return fromRaw;
+      return fromRawHash;
     }
   }
 

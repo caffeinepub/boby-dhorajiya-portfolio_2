@@ -189,7 +189,9 @@ export function useIsCallerAdmin() {
       }
     },
     enabled: !!actor && !isFetching,
-    retry: false,
+    // Allow up to 2 retries with backoff to handle transient network issues
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
   });
 }
 
