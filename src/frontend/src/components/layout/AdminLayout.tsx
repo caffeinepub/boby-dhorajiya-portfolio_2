@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
@@ -45,35 +46,64 @@ export function AdminLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { identity, isInitializing, clear } = useInternetIdentity();
+
+  // Google = email gate (frontend only)
+  const {
+    isLoggedIn: isGoogleLoggedIn,
+    userEmail,
+    logout: googleLogout,
+    isInitializing: googleInitializing,
+  } = useGoogleAuth();
+
+  // Internet Identity = real ICP principal (needed for backend auth)
+  const {
+    identity,
+    isInitializing: iiInitializing,
+    clear: clearII,
+  } = useInternetIdentity();
+
+  // Backend admin check — valid only after II identity is set and actor is initialized
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
 
-  // Redirect to login only when we're 100% certain the user is not admin.
-  // isAdmin === undefined means the query hasn't resolved yet — do NOT redirect.
-  // Only redirect when isAdmin is explicitly false AND all loading is done.
   useEffect(() => {
-    // Still initializing identity — wait
-    if (isInitializing) return;
-    // No identity at all — redirect to login
-    if (!identity) {
+    // Wait while either auth system is still initializing
+    if (googleInitializing || iiInitializing) return;
+
+    // Google email gate: if not Google-logged-in, go to login
+    if (!isGoogleLoggedIn) {
       void navigate({ to: "/admin/login" });
       return;
     }
-    // Identity present but admin check still in flight — wait
+
+    // Google OK but II hasn't completed yet — AdminLogin handles triggering II
+    // Don't redirect; just wait here (AdminLayout's loader covers this)
+    if (!identity) return;
+
+    // Both done — wait for admin check
     if (checkingAdmin || isAdmin === undefined) return;
-    // Identity present, check done, explicitly not admin — redirect
+
+    // Confirmed not admin
     if (isAdmin === false) {
       void navigate({ to: "/admin/login" });
     }
-  }, [identity, isAdmin, isInitializing, checkingAdmin, navigate]);
+  }, [
+    isGoogleLoggedIn,
+    identity,
+    isAdmin,
+    googleInitializing,
+    iiInitializing,
+    checkingAdmin,
+    navigate,
+  ]);
 
-  // Show a full-screen loader while:
-  // - identity is still being restored from storage
-  // - we have an identity but the admin check hasn't returned yet
+  // Show spinner while any auth or admin check is pending
   const stillLoading =
-    isInitializing ||
-    (!identity && !isInitializing) ||
-    (!!identity && (checkingAdmin || isAdmin === undefined));
+    googleInitializing ||
+    iiInitializing ||
+    !isGoogleLoggedIn ||
+    !identity ||
+    checkingAdmin ||
+    isAdmin === undefined;
 
   if (stillLoading) {
     return (
@@ -84,7 +114,8 @@ export function AdminLayout() {
   }
 
   const handleLogout = () => {
-    clear();
+    googleLogout();
+    clearII();
     void navigate({ to: "/admin/login" });
   };
 
@@ -154,8 +185,8 @@ export function AdminLayout() {
           {sidebarOpen && "Logout"}
         </Button>
         {sidebarOpen && (
-          <p className="text-xs text-sidebar-foreground/40 mt-2 px-2">
-            Boby Dhorajiya
+          <p className="text-xs text-sidebar-foreground/40 mt-2 px-2 truncate">
+            {userEmail ?? "Boby Dhorajiya"}
           </p>
         )}
       </div>

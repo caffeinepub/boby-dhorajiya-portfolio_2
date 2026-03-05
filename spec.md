@@ -1,36 +1,43 @@
 # Boby Dhorajiya Portfolio
 
 ## Current State
-A full-stack portfolio app built on Motoko (backend) + React/TypeScript (frontend). The backend has 9 modules: Project, Skill, Service, Testimonial, BlogPost, Experience, Category, Contact, SocialLink, plus SEO settings and authorization. The frontend has public pages (Home, About, Projects, Skills, Services, Testimonials, Blog, Experience, Contact) and a full admin panel with dashboard, CRUD for all entities, leads view, SEO, social links, and help page. Previous production deployments have had bugs including: `.sort()` without comparators causing runtime traps, BigInt parsing crashes, and admin access issues.
+- Auth: Internet Identity (ICP's decentralized auth) via `@dfinity/auth-client`
+- Admin access: principal-based via `AccessControl` module + `CAFFEINE_ADMIN_TOKEN` for first-time registration
+- Frontend: `useInternetIdentity` hook, `InternetIdentityProvider`, login page shows "Login with Internet Identity" button + Admin Token field
+- Backend: Motoko actor with `MixinAuthorization` using caller principal for all admin checks
+- All admin CRUD operations guarded by `AccessControl.isAdmin(accessControlState, caller)`
 
 ## Requested Changes (Diff)
 
 ### Add
-- Nothing new -- full clean rebuild with data reset
+- Google OAuth login via `@react-oauth/google` (Client ID: `250579405228-4od4komma9bmf4js267qe2p63go8anga.apps.googleusercontent.com`)
+- `useGoogleAuth` hook replacing `useInternetIdentity` — stores Google ID token in sessionStorage
+- Email whitelist check: only `bobydhorajiya@gmail.com` is allowed admin access
+- `GoogleAuthProvider` replacing `InternetIdentityProvider` in `main.tsx`
+- Clean, minimal Google Sign-In login page (no admin token field, no Internet Identity button)
 
 ### Modify
-- Full production rebuild: regenerate backend from scratch (destroys all existing stored data -- fresh state)
-- Fix all known backend bugs definitively: all `.sort()` calls use explicit comparators; no raw `.sort()` without arguments on any collection
-- Fix all known frontend bugs: safe BigInt parsing everywhere, no double sidebar, single QueryClient only
-- Admin access: first Internet Identity login via admin link grants admin role automatically
-- Clean, stable admin CRUD for all 9 entities with no "Failed to save" errors
-- Contact form stores leads with createdAt timestamp
-- Blog auto-generates unique slugs and prevents duplicates
-- Projects support active/inactive toggle visible in admin, hidden on public frontend
-- Social links support active/inactive toggle
-- Dashboard shows correct counts for all entities
+- `AdminLogin.tsx` — replace Internet Identity button with Google Sign-In button; show error if email not whitelisted
+- `AdminLayout.tsx` — use `useGoogleAuth` instead of `useInternetIdentity`; show logged-in email in sidebar footer
+- `useActor.ts` — replace identity-based actor creation with anonymous actor; Google ID token passed to `_initializeAccessControlWithSecret` for admin registration
+- `main.tsx` — replace `InternetIdentityProvider` with `GoogleAuthProvider`
+- All admin pages — no structural changes needed; mutations still use actor which uses the CAFFEINE_ADMIN_TOKEN flow
+- Backend `main.mo` — no changes needed; `resetAllData` and access control remain principal-based. The Google auth flow gates access at frontend before the actor gets the admin token.
 
 ### Remove
-- All stale/buggy code from previous versions
-- Admin token field (already removed in v3)
+- `useInternetIdentity.ts` hook (replaced by `useGoogleAuth.ts`)
+- `InternetIdentityProvider` usage from `main.tsx` and all imports
+- Admin token input field from login page
+- `@dfinity/auth-client` dependency usage (auth-client used only for Internet Identity)
 
 ## Implementation Plan
-1. Regenerate Motoko backend fresh -- all comparator functions explicitly passed to `.sort()`, all modules intact, all CRUD operations clean
-2. Rebuild frontend with single QueryClient in main.tsx, AdminLayout wraps sidebar only once, all admin pages use `<div className="p-8">`, all BigInt parsing uses safe helper
-3. All public React Query hooks: retry: false, try/catch returning [] on failure, empty state UI
-4. Admin guard redirects unauthenticated/non-admin to /admin/login
-5. /admin redirects to /admin/dashboard
-6. Active nav tab = cyan highlight, hover = neutral gray
-7. Availability badge (9 AM - 8 PM) visible in Hero, Footer, Contact
-8. All pages: Home, About, Projects (category filter + skeleton + empty state), Skills (grouped), Services, Testimonials, Blog (SEO slugs), Experience, Contact (rate-limited form + lead storage)
-9. Admin pages: Dashboard stats, Projects CRUD + active toggle, Categories CRUD, Skills CRUD grouped, Experience CRUD, Services CRUD, Testimonials CRUD, Blog CRUD + slug, Social Links CRUD + active toggle, Leads (view only + pagination), SEO settings, Help guide
+1. Install `@react-oauth/google` package
+2. Create `src/hooks/useGoogleAuth.ts` — manages Google sign-in state, email validation, token storage in sessionStorage
+3. Create `src/components/GoogleAuthProvider.tsx` — wraps app with `GoogleOAuthProvider` and provides auth context
+4. Rewrite `AdminLogin.tsx` — Google Sign-In button, email whitelist error, clean UI (no admin token field)
+5. Rewrite `AdminLayout.tsx` — use `useGoogleAuth`, show user email, logout clears Google session
+6. Rewrite `useActor.ts` — actor always created anonymously; on Google login the `CAFFEINE_ADMIN_TOKEN` is used to initialize admin access control (same as before, just triggered by Google auth instead of II)
+7. Rewrite `main.tsx` — replace `InternetIdentityProvider` with `GoogleAuthProvider`
+8. `useQueries.ts` — `useIsCallerAdmin` query still works the same way; no changes needed
+9. Fix `getSecretParameter` to also check query string (not just hash) so the Caffeine dashboard token always gets picked up
+10. Verify typecheck, lint, and build pass

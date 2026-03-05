@@ -198,47 +198,52 @@ export function getSecretFromHash(paramName: string): string | null {
 
 /**
  * Gets a secret parameter with fallback chain:
- *   sessionStorage -> query string -> hash query string -> raw hash value
+ *   1. sessionStorage (fastest, already captured)
+ *   2. Regular query string (?param=value)
+ *   3. Hash query string (#/route?param=value)
+ *   4. Raw hash fragment (#param=value)
  *
- * This is the recommended way to handle sensitive parameters like admin tokens.
- * Always checks sessionStorage first so previously captured tokens survive navigation.
+ * Values found in the URL are automatically saved to sessionStorage.
  *
  * @param paramName - The name of the secret parameter
  * @returns The secret value if found, null otherwise
  */
 export function getSecretParameter(paramName: string): string | null {
-  // 1. Check sessionStorage first — fastest path, survives navigation
+  // 1. Check sessionStorage first
   const stored = getSessionParameter(paramName);
-  if (stored) return stored;
-
-  // 2. Check regular query string (?caffeineAdminToken=...)
-  const urlParams = new URLSearchParams(window.location.search);
-  const queryValue = urlParams.get(paramName);
-  if (queryValue) {
-    storeSessionParameter(paramName, queryValue);
-    return queryValue;
+  if (stored !== null) {
+    return stored;
   }
 
-  // 3. Check hash query string (#/path?caffeineAdminToken=...)
+  // 2. Regular query string (?caffeineAdminToken=xxx)
+  const qs = new URLSearchParams(window.location.search);
+  const fromQs = qs.get(paramName);
+  if (fromQs) {
+    storeSessionParameter(paramName, fromQs);
+    return fromQs;
+  }
+
+  // 3. Hash query string (#/route?caffeineAdminToken=xxx)
   const hash = window.location.hash;
-  const qIdx = hash.indexOf("?");
-  if (qIdx !== -1) {
-    const hashParams = new URLSearchParams(hash.substring(qIdx + 1));
-    const hashQueryValue = hashParams.get(paramName);
-    if (hashQueryValue) {
-      storeSessionParameter(paramName, hashQueryValue);
-      return hashQueryValue;
-    }
-  }
-
-  // 4. Check raw hash fragment (#caffeineAdminToken=...)
   if (hash && hash.length > 1) {
-    const rawHash = hash.substring(1);
-    const rawParams = new URLSearchParams(rawHash);
-    const rawValue = rawParams.get(paramName);
-    if (rawValue) {
-      storeSessionParameter(paramName, rawValue);
-      return rawValue;
+    const hashQIdx = hash.indexOf("?");
+    if (hashQIdx !== -1) {
+      const hqs = new URLSearchParams(hash.substring(hashQIdx + 1));
+      const fromHashQ = hqs.get(paramName);
+      if (fromHashQ) {
+        storeSessionParameter(paramName, fromHashQ);
+        clearParamFromHash(paramName);
+        return fromHashQ;
+      }
+    }
+
+    // 4. Raw hash (#caffeineAdminToken=xxx)
+    const rawHash = new URLSearchParams(hash.substring(1));
+    const fromRaw = rawHash.get(paramName);
+    if (fromRaw) {
+      storeSessionParameter(paramName, fromRaw);
+      clearParamFromHash(paramName);
+      return fromRaw;
     }
   }
 
