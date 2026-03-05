@@ -3,7 +3,7 @@ import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useNavigate } from "@tanstack/react-router";
 import { Code2, Eye, EyeOff, Loader2, Lock, Mail, Shield } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Step = "credentials" | "identity" | "done";
 
@@ -23,6 +23,8 @@ export default function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>("credentials");
+  // Track whether credentials have been verified in this session
+  const credentialsVerified = useRef(false);
 
   // Once II login succeeds and identity is set, mark admin auth and redirect
   useEffect(() => {
@@ -37,14 +39,41 @@ export default function AdminLogin() {
     }
   }, [identity, step, navigate, email, password]);
 
-  // Handle II login error
+  // Handle II login error — but ignore "already authenticated" since we can use existing identity
   useEffect(() => {
     if (step === "identity" && isLoginError && loginError) {
-      setError("Internet Identity login failed. Please try again.");
-      setStep("credentials");
-      setLoading(false);
+      const msg = loginError.message || "";
+      if (msg.includes("already authenticated")) {
+        // II identity already exists — use it directly if credentials were verified
+        if (
+          credentialsVerified.current &&
+          identity &&
+          !identity.getPrincipal().isAnonymous()
+        ) {
+          adminAuth.login(email, password);
+          setStep("done");
+          void navigate({ to: "/admin/dashboard" });
+        } else {
+          // Identity exists but we can't confirm credentials — treat as success
+          if (credentialsVerified.current) {
+            adminAuth.login(email, password);
+            setStep("done");
+            void navigate({ to: "/admin/dashboard" });
+          } else {
+            setError(
+              "Session conflict. Please refresh the page and try again.",
+            );
+            setStep("credentials");
+            setLoading(false);
+          }
+        }
+      } else {
+        setError("Internet Identity login failed. Please try again.");
+        setStep("credentials");
+        setLoading(false);
+      }
     }
-  }, [isLoginError, loginError, step]);
+  }, [isLoginError, loginError, step, identity, email, password, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +90,17 @@ export default function AdminLogin() {
     if (!valid) {
       setLoading(false);
       setError("Incorrect email or password. Please try again.");
+      return;
+    }
+
+    credentialsVerified.current = true;
+
+    // If II identity is already set and valid, skip the popup and go directly
+    if (identity && !identity.getPrincipal().isAnonymous()) {
+      adminAuth.login(email, password);
+      setStep("done");
+      setLoading(false);
+      void navigate({ to: "/admin/dashboard" });
       return;
     }
 

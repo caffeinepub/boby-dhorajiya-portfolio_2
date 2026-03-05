@@ -5,12 +5,14 @@ import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
 import "../index.css";
 import { getSecretParameter } from "./utils/urlParams";
 
+// Capture the Caffeine admin token from the URL at startup, before any routing.
+// This ensures the token is in sessionStorage even when /admin redirects straight
+// to /admin/dashboard (bypassing the login page entirely).
+getSecretParameter("caffeineAdminToken");
+
 BigInt.prototype.toJSON = function () {
   return this.toString();
 };
-
-// Capture admin token from URL at startup (before routing strips query params)
-getSecretParameter("caffeineAdminToken");
 
 declare global {
   interface BigInt {
