@@ -20,10 +20,7 @@ import Testimonial "Testimonial";
 
 import Prim "mo:⛔";
 
-// Migrate data on upgrade
-
 actor {
-  // Seed actor with one admin user
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -97,16 +94,13 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Projects
+  // ─── Projects ────────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createProject(project : Project.Project) : async ProjectId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create projects");
     };
-
-    let newProject = {
-      project with
-      id = nextProjectId;
-    };
+    let newProject = { project with id = nextProjectId };
     projects.add(nextProjectId, newProject);
     nextProjectId += 1;
     newProject.id;
@@ -116,34 +110,22 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update projects");
     };
-
-    if (not projects.containsKey(id)) {
-      Runtime.trap("Project not found");
-    };
-
-    let updatedProject = {
-      project with
-      id;
-    };
-    projects.add(id, updatedProject);
+    if (not projects.containsKey(id)) { Runtime.trap("Project not found") };
+    projects.add(id, { project with id });
   };
 
   public shared ({ caller }) func deleteProject(id : ProjectId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete projects");
     };
-
-    if (not projects.containsKey(id)) {
-      Runtime.trap("Project not found");
-    };
-
+    if (not projects.containsKey(id)) { Runtime.trap("Project not found") };
     projects.remove(id);
   };
 
   public query func getProject(id : ProjectId) : async Project.Project {
     switch (projects.get(id)) {
       case (null) { Runtime.trap("Project not found") };
-      case (?project) { project };
+      case (?p) { p };
     };
   };
 
@@ -158,16 +140,13 @@ actor {
     projects.values().toArray().sort();
   };
 
-  // Skills
+  // ─── Skills ──────────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createSkill(skill : Skill.Skill) : async SkillId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create skills");
     };
-
-    let newSkill = {
-      skill with
-      id = nextSkillId;
-    };
+    let newSkill = { skill with id = nextSkillId };
     skills.add(nextSkillId, newSkill);
     nextSkillId += 1;
     newSkill.id;
@@ -177,34 +156,22 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update skills");
     };
-
-    if (not skills.containsKey(id)) {
-      Runtime.trap("Skill not found");
-    };
-
-    let updatedSkill = {
-      skill with
-      id;
-    };
-    skills.add(id, updatedSkill);
+    if (not skills.containsKey(id)) { Runtime.trap("Skill not found") };
+    skills.add(id, { skill with id });
   };
 
   public shared ({ caller }) func deleteSkill(id : SkillId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete skills");
     };
-
-    if (not skills.containsKey(id)) {
-      Runtime.trap("Skill not found");
-    };
-
+    if (not skills.containsKey(id)) { Runtime.trap("Skill not found") };
     skills.remove(id);
   };
 
   public query func getSkill(id : SkillId) : async Skill.Skill {
     switch (skills.get(id)) {
       case (null) { Runtime.trap("Skill not found") };
-      case (?skill) { skill };
+      case (?s) { s };
     };
   };
 
@@ -212,16 +179,13 @@ actor {
     skills.values().toArray().sort();
   };
 
-  // Services
+  // ─── Services ────────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createService(service : Service.Service) : async ServiceId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create services");
     };
-
-    let newService = {
-      service with
-      id = nextServiceId;
-    };
+    let newService = { service with id = nextServiceId };
     services.add(nextServiceId, newService);
     nextServiceId += 1;
     newService.id;
@@ -231,34 +195,22 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update services");
     };
-
-    if (not services.containsKey(id)) {
-      Runtime.trap("Service not found");
-    };
-
-    let updatedService = {
-      service with
-      id;
-    };
-    services.add(id, updatedService);
+    if (not services.containsKey(id)) { Runtime.trap("Service not found") };
+    services.add(id, { service with id });
   };
 
   public shared ({ caller }) func deleteService(id : ServiceId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete services");
     };
-
-    if (not services.containsKey(id)) {
-      Runtime.trap("Service not found");
-    };
-
+    if (not services.containsKey(id)) { Runtime.trap("Service not found") };
     services.remove(id);
   };
 
   public query func getService(id : ServiceId) : async Service.Service {
     switch (services.get(id)) {
       case (null) { Runtime.trap("Service not found") };
-      case (?service) { service };
+      case (?s) { s };
     };
   };
 
@@ -266,16 +218,13 @@ actor {
     services.values().toArray().sort();
   };
 
-  // Testimonials
+  // ─── Testimonials ─────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createTestimonial(testimonial : Testimonial.Testimonial) : async TestimonialId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create testimonials");
     };
-
-    let newTestimonial = {
-      testimonial with
-      id = nextTestimonialId;
-    };
+    let newTestimonial = { testimonial with id = nextTestimonialId };
     testimonials.add(nextTestimonialId, newTestimonial);
     nextTestimonialId += 1;
     newTestimonial.id;
@@ -285,34 +234,22 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update testimonials");
     };
-
-    if (not testimonials.containsKey(id)) {
-      Runtime.trap("Testimonial not found");
-    };
-
-    let updatedTestimonial = {
-      testimonial with
-      id;
-    };
-    testimonials.add(id, updatedTestimonial);
+    if (not testimonials.containsKey(id)) { Runtime.trap("Testimonial not found") };
+    testimonials.add(id, { testimonial with id });
   };
 
   public shared ({ caller }) func deleteTestimonial(id : TestimonialId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete testimonials");
     };
-
-    if (not testimonials.containsKey(id)) {
-      Runtime.trap("Testimonial not found");
-    };
-
+    if (not testimonials.containsKey(id)) { Runtime.trap("Testimonial not found") };
     testimonials.remove(id);
   };
 
   public query func getTestimonial(id : TestimonialId) : async Testimonial.Testimonial {
     switch (testimonials.get(id)) {
       case (null) { Runtime.trap("Testimonial not found") };
-      case (?testimonial) { testimonial };
+      case (?t) { t };
     };
   };
 
@@ -320,22 +257,15 @@ actor {
     testimonials.values().toArray().sort();
   };
 
-  // BlogPosts
+  // ─── Blog Posts ───────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createBlogPost(blogPost : Blog.BlogPost) : async BlogPostId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create blog posts");
     };
-
-    // Check for slug uniqueness
-    let existingSlug = blogPosts.values().find(func(bp) { return bp.slug == blogPost.slug });
-    if (existingSlug != null) {
-      Runtime.trap("Slug already exists");
-    };
-
-    let newBlogPost = {
-      blogPost with
-      id = nextBlogPostId;
-    };
+    let existingSlug = blogPosts.values().find(func(bp) { bp.slug == blogPost.slug });
+    if (existingSlug != null) { Runtime.trap("Slug already exists") };
+    let newBlogPost = { blogPost with id = nextBlogPostId };
     blogPosts.add(nextBlogPostId, newBlogPost);
     nextBlogPostId += 1;
     newBlogPost.id;
@@ -345,51 +275,31 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update blog posts");
     };
-
-    if (not blogPosts.containsKey(id)) {
-      Runtime.trap("Blog post not found");
-    };
-
-    // Check for slug uniqueness (exclude current post)
-    let existingSlug = blogPosts.values().find(
-      func(bp) {
-        return bp.slug == blogPost.slug and bp.id != id;
-      }
-    );
-    if (existingSlug != null) {
-      Runtime.trap("Slug already exists");
-    };
-
-    let updatedBlogPost = {
-      blogPost with
-      id;
-    };
-    blogPosts.add(id, updatedBlogPost);
+    if (not blogPosts.containsKey(id)) { Runtime.trap("Blog post not found") };
+    let existingSlug = blogPosts.values().find(func(bp) { bp.slug == blogPost.slug and bp.id != id });
+    if (existingSlug != null) { Runtime.trap("Slug already exists") };
+    blogPosts.add(id, { blogPost with id });
   };
 
   public shared ({ caller }) func deleteBlogPost(id : BlogPostId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete blog posts");
     };
-
-    if (not blogPosts.containsKey(id)) {
-      Runtime.trap("Blog post not found");
-    };
-
+    if (not blogPosts.containsKey(id)) { Runtime.trap("Blog post not found") };
     blogPosts.remove(id);
   };
 
   public query func getBlogPost(id : BlogPostId) : async Blog.BlogPost {
     switch (blogPosts.get(id)) {
       case (null) { Runtime.trap("Blog post not found") };
-      case (?blogPost) { blogPost };
+      case (?bp) { bp };
     };
   };
 
   public query func getBlogPostBySlug(slug : Text) : async Blog.BlogPost {
     switch (blogPosts.values().find(func(bp) { bp.slug == slug })) {
       case (null) { Runtime.trap("Blog post not found") };
-      case (?blogPost) { blogPost };
+      case (?bp) { bp };
     };
   };
 
@@ -404,16 +314,13 @@ actor {
     blogPosts.values().toArray().sort(Blog.compareByPublishedAt);
   };
 
-  // Experiences
+  // ─── Experiences ──────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createExperience(experience : Experience.Experience) : async ExperienceId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create experiences");
     };
-
-    let newExperience = {
-      experience with
-      id = nextExperienceId;
-    };
+    let newExperience = { experience with id = nextExperienceId };
     experiences.add(nextExperienceId, newExperience);
     nextExperienceId += 1;
     newExperience.id;
@@ -423,34 +330,22 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update experiences");
     };
-
-    if (not experiences.containsKey(id)) {
-      Runtime.trap("Experience not found");
-    };
-
-    let updatedExperience = {
-      experience with
-      id;
-    };
-    experiences.add(id, updatedExperience);
+    if (not experiences.containsKey(id)) { Runtime.trap("Experience not found") };
+    experiences.add(id, { experience with id });
   };
 
   public shared ({ caller }) func deleteExperience(id : ExperienceId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete experiences");
     };
-
-    if (not experiences.containsKey(id)) {
-      Runtime.trap("Experience not found");
-    };
-
+    if (not experiences.containsKey(id)) { Runtime.trap("Experience not found") };
     experiences.remove(id);
   };
 
   public query func getExperience(id : ExperienceId) : async Experience.Experience {
     switch (experiences.get(id)) {
       case (null) { Runtime.trap("Experience not found") };
-      case (?experience) { experience };
+      case (?e) { e };
     };
   };
 
@@ -458,16 +353,13 @@ actor {
     experiences.values().toArray().sort();
   };
 
-  // Categories
+  // ─── Categories ───────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createCategory(category : Category.Category) : async CategoryId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create categories");
     };
-
-    let newCategory = {
-      category with
-      id = nextCategoryId;
-    };
+    let newCategory = { category with id = nextCategoryId };
     categories.add(nextCategoryId, newCategory);
     nextCategoryId += 1;
     newCategory.id;
@@ -477,34 +369,22 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update categories");
     };
-
-    if (not categories.containsKey(id)) {
-      Runtime.trap("Category not found");
-    };
-
-    let updatedCategory = {
-      category with
-      id;
-    };
-    categories.add(id, updatedCategory);
+    if (not categories.containsKey(id)) { Runtime.trap("Category not found") };
+    categories.add(id, { category with id });
   };
 
   public shared ({ caller }) func deleteCategory(id : CategoryId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete categories");
     };
-
-    if (not categories.containsKey(id)) {
-      Runtime.trap("Category not found");
-    };
-
+    if (not categories.containsKey(id)) { Runtime.trap("Category not found") };
     categories.remove(id);
   };
 
   public query func getCategory(id : CategoryId) : async Category.Category {
     switch (categories.get(id)) {
       case (null) { Runtime.trap("Category not found") };
-      case (?category) { category };
+      case (?c) { c };
     };
   };
 
@@ -512,7 +392,8 @@ actor {
     categories.values().toArray().sort();
   };
 
-  // Contacts (leads)
+  // ─── Contacts (Leads) ─────────────────────────────────────────────────────────
+
   public shared func createContact(contact : Contact.Contact) : async ContactId {
     let newContact = {
       contact with
@@ -528,11 +409,7 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete contacts");
     };
-
-    if (not contacts.containsKey(id)) {
-      Runtime.trap("Contact not found");
-    };
-
+    if (not contacts.containsKey(id)) { Runtime.trap("Contact not found") };
     contacts.remove(id);
   };
 
@@ -540,10 +417,9 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can read contacts");
     };
-
     switch (contacts.get(id)) {
       case (null) { Runtime.trap("Contact not found") };
-      case (?contact) { contact };
+      case (?c) { c };
     };
   };
 
@@ -554,16 +430,13 @@ actor {
     contacts.values().toArray().sort(Contact.compareByCreatedAt);
   };
 
-  // SocialLinks
+  // ─── Social Links ─────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func createSocialLink(socialLink : SocialLink.SocialLink) : async SocialLinkId {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can create social links");
     };
-
-    let newSocialLink = {
-      socialLink with
-      id = nextSocialLinkId;
-    };
+    let newSocialLink = { socialLink with id = nextSocialLinkId };
     socialLinks.add(nextSocialLinkId, newSocialLink);
     nextSocialLinkId += 1;
     newSocialLink.id;
@@ -573,34 +446,22 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update social links");
     };
-
-    if (not socialLinks.containsKey(id)) {
-      Runtime.trap("Social link not found");
-    };
-
-    let updatedSocialLink = {
-      socialLink with
-      id;
-    };
-    socialLinks.add(id, updatedSocialLink);
+    if (not socialLinks.containsKey(id)) { Runtime.trap("Social link not found") };
+    socialLinks.add(id, { socialLink with id });
   };
 
   public shared ({ caller }) func deleteSocialLink(id : SocialLinkId) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can delete social links");
     };
-
-    if (not socialLinks.containsKey(id)) {
-      Runtime.trap("Social link not found");
-    };
-
+    if (not socialLinks.containsKey(id)) { Runtime.trap("Social link not found") };
     socialLinks.remove(id);
   };
 
   public query func getSocialLink(id : SocialLinkId) : async SocialLink.SocialLink {
     switch (socialLinks.get(id)) {
       case (null) { Runtime.trap("Social link not found") };
-      case (?socialLink) { socialLink };
+      case (?sl) { sl };
     };
   };
 
@@ -615,12 +476,12 @@ actor {
     socialLinks.values().toArray().sort();
   };
 
-  // SEO Settings
+  // ─── SEO Settings ─────────────────────────────────────────────────────────────
+
   public shared ({ caller }) func updateSeoSettings(newSettings : SeoSettings) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update SEO settings");
     };
-
     seoSettings := newSettings;
   };
 
@@ -628,7 +489,8 @@ actor {
     seoSettings;
   };
 
-  // Dashboard stats (admin only)
+  // ─── Dashboard Stats ──────────────────────────────────────────────────────────
+
   public query ({ caller }) func getDashboardStats() : async {
     projectsCount : Nat;
     blogsCount : Nat;
@@ -640,7 +502,6 @@ actor {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can view dashboard stats");
     };
-
     {
       projectsCount = projects.size();
       blogsCount = blogPosts.size();
@@ -651,21 +512,17 @@ actor {
     };
   };
 
-  // --- New admin reset function ---
+  // ─── Database Reset ───────────────────────────────────────────────────────────
+
   public shared ({ caller }) func resetAllData(adminToken : Text) : async () {
-    // Validate authorization: caller must be admin OR token must match environment variable
     let isCallerAdmin = AccessControl.isAdmin(accessControlState, caller);
-    
     let tokenValid = switch (Prim.envVar<system>("CAFFEINE_ADMIN_TOKEN")) {
       case null { false };
       case (?envToken) { adminToken == envToken };
     };
-
     if (not isCallerAdmin and not tokenValid) {
       Runtime.trap("Unauthorized");
     };
-
-    // Clear all data maps
     projects.clear();
     skills.clear();
     services.clear();
@@ -676,8 +533,6 @@ actor {
     contacts.clear();
     socialLinks.clear();
     userProfiles.clear();
-
-    // Reset all ID counters
     nextProjectId := 0;
     nextSkillId := 0;
     nextServiceId := 0;
@@ -687,18 +542,10 @@ actor {
     nextCategoryId := 0;
     nextContactId := 0;
     nextSocialLinkId := 0;
-
-    // Reset SEO settings to defaults
     seoSettings := {
       metaTitle = "Boby Dhorajiya - Mobile App Developer";
       metaDescription = "Portfolio website showcasing the skills, projects, and services of Boby Dhorajiya, a professional mobile app developer specializing in Flutter and React Native.";
       ogImage = "";
     };
-
-    // Note: We cannot directly clear the accessControlState.userRoles map or reset adminAssigned
-    // because AccessControlState is an opaque type from the access-control module.
-    // The access control state will need to be reinitialized through the normal
-    // _initializeAccessControlWithSecret flow after this reset.
-    // This is acceptable as the function's purpose is to allow re-registration without redeployment.
   };
 };

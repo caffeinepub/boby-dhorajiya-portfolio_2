@@ -1,13 +1,22 @@
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
+import {
+  getSecretParameter,
+  getSessionParameter,
+  storeSessionParameter,
+} from "@/utils/urlParams";
 import { useNavigate } from "@tanstack/react-router";
-import { Code2, Loader2, LogIn, Shield } from "lucide-react";
+import { Code2, Key, Loader2, LogIn, Shield } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [adminToken, setAdminToken] = useState<string>(() => {
+    // Pre-fill from sessionStorage or URL if already captured
+    return getSessionParameter("caffeineAdminToken") ?? "";
+  });
 
   const {
     login,
@@ -32,7 +41,7 @@ export default function AdminLogin() {
   useEffect(() => {
     if (identity && !checkingAdmin && isAdmin === false) {
       setLoginError(
-        "This Internet Identity is not registered as admin.\n\nTo get admin access:\n1. Open the app from the Caffeine dashboard (not by typing the URL)\n2. Click Login with Internet Identity\n\nThe dashboard link contains your admin token which registers your identity as admin.",
+        "Access denied. Your Internet Identity is not registered as admin.\n\nIf you have the admin token, paste it in the field above and try logging in again.",
       );
     }
   }, [identity, isAdmin, checkingAdmin]);
@@ -46,6 +55,14 @@ export default function AdminLogin() {
 
   const handleLogin = () => {
     setLoginError(null);
+    // Save whatever token is in the input field to sessionStorage before login
+    const token = adminToken.trim();
+    if (token) {
+      storeSessionParameter("caffeineAdminToken", token);
+    } else {
+      // Try to pick up from URL one more time in case it was missed
+      getSecretParameter("caffeineAdminToken");
+    }
     login();
   };
 
@@ -86,11 +103,38 @@ export default function AdminLogin() {
           </div>
 
           {/* Security badge */}
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/15 mb-6">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/15 mb-5">
             <Shield className="w-4 h-4 text-cyan shrink-0" />
             <p className="text-xs text-muted-foreground">
               Secured with Internet Identity — only the registered admin can
               access this panel
+            </p>
+          </div>
+
+          {/* Admin token input */}
+          <div className="mb-5">
+            <label
+              htmlFor="admin-token"
+              className="block text-xs font-medium text-muted-foreground mb-1.5"
+            >
+              Admin Token{" "}
+              <span className="text-muted-foreground/50">(required)</span>
+            </label>
+            <div className="relative">
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+              <input
+                id="admin-token"
+                type="password"
+                value={adminToken}
+                onChange={(e) => setAdminToken(e.target.value)}
+                placeholder="Paste your admin token here"
+                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-background border border-border text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                data-ocid="admin.token.input"
+                autoComplete="off"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground/50 mt-1">
+              Find your token in the Caffeine dashboard under project settings.
             </p>
           </div>
 
