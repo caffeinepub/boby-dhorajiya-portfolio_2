@@ -172,6 +172,7 @@ export interface backendInterface {
     getTestimonial(id: TestimonialId): Promise<Testimonial>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    resetAllData(adminToken: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     updateBlogPost(id: BlogPostId, blogPost: BlogPost): Promise<void>;
     updateCategory(id: CategoryId, category: Category__2): Promise<void>;

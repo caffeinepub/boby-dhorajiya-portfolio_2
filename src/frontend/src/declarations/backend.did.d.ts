@@ -171,6 +171,7 @@ export interface _SERVICE {
   'getTestimonial' : ActorMethod<[TestimonialId], Testimonial>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'resetAllData' : ActorMethod<[string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'updateBlogPost' : ActorMethod<[BlogPostId, BlogPost], undefined>,
   'updateCategory' : ActorMethod<[CategoryId, Category__2], undefined>,

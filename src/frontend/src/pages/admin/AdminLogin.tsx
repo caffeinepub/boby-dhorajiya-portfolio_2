@@ -1,11 +1,17 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
-import { getUrlParameter, storeSessionParameter } from "@/utils/urlParams";
+import {
+  getSessionParameter,
+  getUrlParameter,
+  storeSessionParameter,
+} from "@/utils/urlParams";
 import { useNavigate } from "@tanstack/react-router";
-import { Code2, Loader2, Shield } from "lucide-react";
+import { Code2, Key, Loader2, Shield } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 // Read the admin token from all possible URL sources and persist to sessionStorage
 // so useActor can find it when creating the authenticated actor after II login.
@@ -44,29 +50,51 @@ export default function AdminLogin() {
     useInternetIdentity();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
 
+  const TOKEN_KEY = "caffeineAdminToken";
+
+  // Initialise field from sessionStorage (already captured at app root) or URL
+  const [adminToken, setAdminToken] = useState<string>(() => {
+    return getSessionParameter(TOKEN_KEY) ?? getUrlParameter(TOKEN_KEY) ?? "";
+  });
+
   // On mount, capture admin token from URL into sessionStorage so useActor
   // can use it when creating the authenticated actor after login completes.
   useEffect(() => {
     persistAdminTokenFromUrl();
+    // Sync field value with whatever was captured
+    const stored = getSessionParameter(TOKEN_KEY);
+    if (stored) setAdminToken(stored);
   }, []);
 
+  // Keep sessionStorage in sync when the user types in the field
+  const handleTokenChange = (value: string) => {
+    setAdminToken(value);
+    if (value.trim()) {
+      storeSessionParameter(TOKEN_KEY, value.trim());
+    }
+  };
+
+  // Redirect to dashboard whenever we have a confirmed admin — covers both
+  // fresh login (isLoginSuccess) and page-reload with saved identity.
   useEffect(() => {
-    if (isLoginSuccess && isAdmin === true) {
+    if (isAdmin === true && !checkingAdmin) {
       void navigate({ to: "/admin/dashboard" });
     }
-  }, [isLoginSuccess, isAdmin, navigate]);
+  }, [isAdmin, checkingAdmin, navigate]);
 
-  useEffect(() => {
-    if (identity && isAdmin === true) {
-      void navigate({ to: "/admin/dashboard" });
-    }
-  }, [identity, isAdmin, navigate]);
-
-  const isAccessDenied = isLoginSuccess && isAdmin === false && !checkingAdmin;
+  // isAccessDenied: user went through login AND we finished checking AND they're not admin
+  const isAccessDenied =
+    (isLoginSuccess || !!identity) &&
+    isAdmin === false &&
+    !checkingAdmin &&
+    !isInitializing;
 
   const handleLogin = () => {
-    // Re-run token persistence in case the user arrived late or refreshed
+    // Persist whatever token the user has entered (or what was captured from URL)
     persistAdminTokenFromUrl();
+    if (adminToken.trim()) {
+      storeSessionParameter(TOKEN_KEY, adminToken.trim());
+    }
     login();
   };
 
@@ -100,6 +128,29 @@ export default function AdminLogin() {
             <Shield className="w-4 h-4 text-cyan shrink-0" />
             <p className="text-xs text-muted-foreground">
               Secured with Internet Identity — decentralized authentication
+            </p>
+          </div>
+
+          {/* Admin Token field */}
+          <div className="mb-5 space-y-1.5">
+            <Label
+              htmlFor="admin-token"
+              className="text-sm text-muted-foreground flex items-center gap-1.5"
+            >
+              <Key className="w-3.5 h-3.5 text-cyan" />
+              Admin Token
+            </Label>
+            <Input
+              id="admin-token"
+              type="password"
+              placeholder="Paste your admin token here"
+              value={adminToken}
+              onChange={(e) => handleTokenChange(e.target.value)}
+              className="bg-background/50 border-border focus:border-cyan/50 text-sm"
+              data-ocid="admin.token.input"
+            />
+            <p className="text-xs text-muted-foreground/60">
+              Find this in the Caffeine dashboard under your project settings.
             </p>
           </div>
 

@@ -1,15 +1,32 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGetDashboardStats } from "@/hooks/useQueries";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useGetDashboardStats, useResetAllData } from "@/hooks/useQueries";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  AlertTriangle,
   BookOpen,
   FolderOpen,
   Loader2,
   Mail,
   Settings,
+  Trash2,
   Users,
   Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const statConfig = [
   {
@@ -58,6 +75,25 @@ const statConfig = [
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useGetDashboardStats();
+  const resetMutation = useResetAllData();
+  const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleReset = async () => {
+    try {
+      await resetMutation.mutateAsync("");
+      setDialogOpen(false);
+      toast.success(
+        "Database reset successfully. Please log out and log in again to re-register as admin.",
+        { duration: 5000 },
+      );
+      setTimeout(() => {
+        navigate({ to: "/admin/login" });
+      }, 2000);
+    } catch {
+      toast.error("Reset failed. Try again.");
+    }
+  };
 
   return (
     <div className="p-8" data-ocid="admin.dashboard_panel">
@@ -115,6 +151,91 @@ export default function AdminDashboard() {
           })}
         </div>
       )}
+
+      {/* Danger Zone */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-12"
+      >
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+            </div>
+            <h2 className="font-display text-base font-semibold text-red-400 tracking-wide uppercase">
+              Danger Zone
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+            Permanently wipe all portfolio data and reset admin access. This
+            action cannot be undone. Use only when you need a fresh start.
+          </p>
+
+          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="gap-2 bg-red-600 hover:bg-red-700 text-white border-0"
+                data-ocid="admin.reset_database_button"
+              >
+                <Trash2 className="w-4 h-4" />
+                Reset Database
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent
+              className="border-red-500/40 bg-card"
+              data-ocid="admin.reset_dialog"
+            >
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-red-400">
+                  <AlertTriangle className="w-5 h-5" />
+                  Reset All Data?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground leading-relaxed">
+                  This will permanently delete{" "}
+                  <span className="text-foreground font-medium">ALL data</span>{" "}
+                  — projects, skills, services, blogs, testimonials,
+                  experiences, contacts, and social links — and reset admin
+                  access. You will need to log in again to re-register as admin.
+                  <br />
+                  <br />
+                  <span className="text-red-400 font-medium">
+                    This action cannot be undone.
+                  </span>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  className="border-border hover:bg-muted"
+                  data-ocid="admin.reset_cancel_button"
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleReset}
+                  disabled={resetMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+                  data-ocid="admin.reset_confirm_button"
+                >
+                  {resetMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Resetting…
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Reset Everything
+                    </>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </motion.div>
     </div>
   );
 }

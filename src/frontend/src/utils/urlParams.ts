@@ -197,18 +197,43 @@ export function getSecretFromHash(paramName: string): string | null {
 }
 
 /**
- * Gets a secret parameter with fallback chain: hash -> sessionStorage
- * This is the recommended way to handle sensitive parameters like admin tokens
+ * Gets a secret parameter with fallback chain:
+ *   1. sessionStorage (set by persistAdminTokenFromUrl on any page load)
+ *   2. Regular query string (?paramName=value)
+ *   3. Hash query string (#/path?paramName=value)
+ *   4. Raw hash fragment (#paramName=value)
  *
- * Security benefits over regular URL params:
- * - Hash fragments are not sent to the server
- * - Not logged in server access logs
- * - Not sent in HTTP Referer headers
- * - Automatically cleared from URL after extraction
+ * This covers all URL formats the Caffeine dashboard may use, and persists
+ * the token across navigation so it is available when useActor creates the
+ * authenticated actor (which may happen long after the initial page load).
  *
  * @param paramName - The name of the secret parameter
  * @returns The secret value if found, null otherwise
  */
 export function getSecretParameter(paramName: string): string | null {
+  // 1. Already stored in session from a prior page-load — fastest path
+  const stored = getSessionParameter(paramName);
+  if (stored) return stored;
+
+  // 2. Regular query string
+  const queryToken = new URLSearchParams(window.location.search).get(paramName);
+  if (queryToken) {
+    storeSessionParameter(paramName, queryToken);
+    return queryToken;
+  }
+
+  // 3. Hash query string  (#/path?paramName=value)
+  const hash = window.location.hash;
+  const qIdx = hash.indexOf("?");
+  if (qIdx !== -1) {
+    const hashParams = new URLSearchParams(hash.substring(qIdx + 1));
+    const hashToken = hashParams.get(paramName);
+    if (hashToken) {
+      storeSessionParameter(paramName, hashToken);
+      return hashToken;
+    }
+  }
+
+  // 4. Raw hash fragment (#paramName=value  — original getSecretFromHash path)
   return getSecretFromHash(paramName);
 }

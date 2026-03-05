@@ -176,14 +176,16 @@ export function useGetSeoSettings() {
 
 export function useIsCallerAdmin() {
   const { actor, isFetching } = useActor();
-  return useQuery<boolean>({
+  return useQuery<boolean | undefined>({
     queryKey: ["isCallerAdmin"],
     queryFn: async () => {
       try {
-        if (!actor) return false;
+        if (!actor) return undefined;
         return await actor.isCallerAdmin();
       } catch {
-        return false;
+        // Return undefined on error so callers can distinguish
+        // "definitely not admin" (false) from "check failed / still loading" (undefined)
+        return undefined;
       }
     },
     enabled: !!actor && !isFetching,
@@ -638,5 +640,21 @@ export function useUpdateSeoSettings() {
       return actor.updateSeoSettings(settings);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["seoSettings"] }),
+  });
+}
+
+// Reset all data
+export function useResetAllData() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (adminToken: string) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.resetAllData(adminToken);
+    },
+    onSuccess: () => {
+      // Invalidate all queries after reset
+      qc.invalidateQueries();
+    },
   });
 }

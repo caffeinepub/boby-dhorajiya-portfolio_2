@@ -8,11 +8,9 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy } from "react";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { PublicLayout } from "./components/layout/PublicLayout";
-import { useInternetIdentity } from "./hooks/useInternetIdentity";
-import { useIsCallerAdmin } from "./hooks/useQueries";
 
 // Lazy-loaded public pages
 const Home = lazy(() => import("./pages/Home"));
@@ -350,30 +348,10 @@ declare module "@tanstack/react-router" {
   }
 }
 
-// Admin guard component
-function AdminGuard() {
-  const { identity, isInitializing } = useInternetIdentity();
-  const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
-  const navigate = router.navigate.bind(router);
-
-  useEffect(() => {
-    if (!isInitializing && !checkingAdmin) {
-      if (!identity) {
-        void navigate({ to: "/admin/login" });
-      } else if (isAdmin === false) {
-        void navigate({ to: "/admin/login" });
-      }
-    }
-  }, [identity, isAdmin, isInitializing, checkingAdmin, navigate]);
-
-  return null;
-}
-
 export default function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <AdminGuard />
       <Toaster
         theme="dark"
         position="bottom-right"

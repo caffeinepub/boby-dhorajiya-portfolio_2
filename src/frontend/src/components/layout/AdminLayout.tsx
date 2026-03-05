@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useIsCallerAdmin } from "@/hooks/useQueries";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   BookOpen,
@@ -11,6 +12,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   Link2,
+  Loader2,
   LogOut,
   Mail,
   Menu,
@@ -21,7 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const adminNavLinks = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
@@ -43,7 +45,43 @@ export function AdminLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { clear } = useInternetIdentity();
+  const { identity, isInitializing, clear } = useInternetIdentity();
+  const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
+
+  // Redirect to login only when we're 100% certain the user is not admin.
+  // isAdmin === undefined means the query hasn't resolved yet — do NOT redirect.
+  // Only redirect when isAdmin is explicitly false AND all loading is done.
+  useEffect(() => {
+    // Still initializing identity — wait
+    if (isInitializing) return;
+    // No identity at all — redirect to login
+    if (!identity) {
+      void navigate({ to: "/admin/login" });
+      return;
+    }
+    // Identity present but admin check still in flight — wait
+    if (checkingAdmin || isAdmin === undefined) return;
+    // Identity present, check done, explicitly not admin — redirect
+    if (isAdmin === false) {
+      void navigate({ to: "/admin/login" });
+    }
+  }, [identity, isAdmin, isInitializing, checkingAdmin, navigate]);
+
+  // Show a full-screen loader while:
+  // - identity is still being restored from storage
+  // - we have an identity but the admin check hasn't returned yet
+  const stillLoading =
+    isInitializing ||
+    (!identity && !isInitializing) ||
+    (!!identity && (checkingAdmin || isAdmin === undefined));
+
+  if (stillLoading) {
+    return (
+      <div className="min-h-screen bg-navy flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-cyan" />
+      </div>
+    );
+  }
 
   const handleLogout = () => {
     clear();

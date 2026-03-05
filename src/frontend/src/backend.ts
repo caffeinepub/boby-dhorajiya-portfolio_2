@@ -255,6 +255,7 @@ export interface backendInterface {
     getTestimonial(id: TestimonialId): Promise<Testimonial>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    resetAllData(adminToken: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     updateBlogPost(id: BlogPostId, blogPost: BlogPost): Promise<void>;
     updateCategory(id: CategoryId, category: Category__2): Promise<void>;
@@ -945,6 +946,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async resetAllData(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.resetAllData(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.resetAllData(arg0);
             return result;
         }
     }

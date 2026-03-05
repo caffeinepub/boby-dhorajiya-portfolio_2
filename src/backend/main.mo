@@ -17,9 +17,11 @@ import SocialLink "SocialLink";
 import Experience "Experience";
 import Contact "Contact";
 import Testimonial "Testimonial";
-import Migration "migration";
 
-(with migration = Migration.run)
+import Prim "mo:⛔";
+
+// Migrate data on upgrade
+
 actor {
   // Seed actor with one admin user
   let accessControlState = AccessControl.initState();
@@ -647,5 +649,56 @@ actor {
       servicesCount = services.size();
       testimonialsCount = testimonials.size();
     };
+  };
+
+  // --- New admin reset function ---
+  public shared ({ caller }) func resetAllData(adminToken : Text) : async () {
+    // Validate authorization: caller must be admin OR token must match environment variable
+    let isCallerAdmin = AccessControl.isAdmin(accessControlState, caller);
+    
+    let tokenValid = switch (Prim.envVar("CAFFEINE_ADMIN_TOKEN")) {
+      case null { false };
+      case (?envToken) { adminToken == envToken };
+    };
+
+    if (not isCallerAdmin and not tokenValid) {
+      Runtime.trap("Unauthorized");
+    };
+
+    // Clear all data maps
+    projects.clear();
+    skills.clear();
+    services.clear();
+    testimonials.clear();
+    blogPosts.clear();
+    experiences.clear();
+    categories.clear();
+    contacts.clear();
+    socialLinks.clear();
+    userProfiles.clear();
+
+    // Reset all ID counters
+    nextProjectId := 0;
+    nextSkillId := 0;
+    nextServiceId := 0;
+    nextTestimonialId := 0;
+    nextBlogPostId := 0;
+    nextExperienceId := 0;
+    nextCategoryId := 0;
+    nextContactId := 0;
+    nextSocialLinkId := 0;
+
+    // Reset SEO settings to defaults
+    seoSettings := {
+      metaTitle = "Boby Dhorajiya - Mobile App Developer";
+      metaDescription = "Portfolio website showcasing the skills, projects, and services of Boby Dhorajiya, a professional mobile app developer specializing in Flutter and React Native.";
+      ogImage = "";
+    };
+
+    // Note: We cannot directly clear the accessControlState.userRoles map or reset adminAssigned
+    // because AccessControlState is an opaque type from the access-control module.
+    // The access control state will need to be reinitialized through the normal
+    // _initializeAccessControlWithSecret flow after this reset.
+    // This is acceptable as the function's purpose is to allow re-registration without redeployment.
   };
 };
