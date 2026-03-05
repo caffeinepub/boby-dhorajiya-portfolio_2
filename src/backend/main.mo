@@ -2,6 +2,7 @@ import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Array "mo:core/Array";
 import Iter "mo:core/Iter";
+import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
 import Text "mo:core/Text";
 import Principal "mo:core/Principal";
@@ -16,7 +17,9 @@ import SocialLink "SocialLink";
 import Experience "Experience";
 import Contact "Contact";
 import Testimonial "Testimonial";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   // Seed actor with one admin user
   let accessControlState = AccessControl.initState();
@@ -381,6 +384,13 @@ actor {
     };
   };
 
+  public query func getBlogPostBySlug(slug : Text) : async Blog.BlogPost {
+    switch (blogPosts.values().find(func(bp) { bp.slug == slug })) {
+      case (null) { Runtime.trap("Blog post not found") };
+      case (?blogPost) { blogPost };
+    };
+  };
+
   public query func getPublishedBlogPosts() : async [Blog.BlogPost] {
     blogPosts.values().toArray().filter(func(bp) { bp.isPublished }).sort(Blog.compareByPublishedAt);
   };
@@ -505,6 +515,7 @@ actor {
     let newContact = {
       contact with
       id = nextContactId;
+      createdAt = Time.now();
     };
     contacts.add(nextContactId, newContact);
     nextContactId += 1;
@@ -593,6 +604,13 @@ actor {
 
   public query func getActiveSocialLinks() : async [SocialLink.SocialLink] {
     socialLinks.values().toArray().filter(func(sl) { sl.isActive }).sort();
+  };
+
+  public query ({ caller }) func getAllSocialLinksAdmin() : async [SocialLink.SocialLink] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Admins only");
+    };
+    socialLinks.values().toArray().sort();
   };
 
   // SEO Settings

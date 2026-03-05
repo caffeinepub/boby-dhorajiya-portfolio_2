@@ -64,11 +64,11 @@ export default function Contact() {
 
     try {
       await createContact({
-        id: BigInt(Date.now()),
+        id: 0n,
         name: form.name.trim(),
         email: form.email.trim(),
         message: form.message.trim(),
-        createdAt: BigInt(Date.now()) * 1_000_000n,
+        createdAt: 0n, // backend sets this via Time.now()
       });
       setSubmitted(true);
       toast.success("Message sent! I'll get back to you soon.");

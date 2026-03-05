@@ -146,8 +146,10 @@ export interface backendInterface {
     getAllProjectsAdmin(): Promise<Array<Project>>;
     getAllServices(): Promise<Array<Service>>;
     getAllSkills(): Promise<Array<Skill>>;
+    getAllSocialLinksAdmin(): Promise<Array<SocialLink>>;
     getAllTestimonials(): Promise<Array<Testimonial>>;
     getBlogPost(id: BlogPostId): Promise<BlogPost>;
+    getBlogPostBySlug(slug: string): Promise<BlogPost>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCategory(id: CategoryId): Promise<Category__2>;

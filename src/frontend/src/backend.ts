@@ -229,8 +229,10 @@ export interface backendInterface {
     getAllProjectsAdmin(): Promise<Array<Project>>;
     getAllServices(): Promise<Array<Service>>;
     getAllSkills(): Promise<Array<Skill>>;
+    getAllSocialLinksAdmin(): Promise<Array<SocialLink>>;
     getAllTestimonials(): Promise<Array<Testimonial>>;
     getBlogPost(id: BlogPostId): Promise<BlogPost>;
+    getBlogPostBySlug(slug: string): Promise<BlogPost>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCategory(id: CategoryId): Promise<Category__2>;
@@ -673,6 +675,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getAllSocialLinksAdmin(): Promise<Array<SocialLink>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllSocialLinksAdmin();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllSocialLinksAdmin();
+            return result;
+        }
+    }
     async getAllTestimonials(): Promise<Array<Testimonial>> {
         if (this.processError) {
             try {
@@ -698,6 +714,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getBlogPost(arg0);
+            return result;
+        }
+    }
+    async getBlogPostBySlug(arg0: string): Promise<BlogPost> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getBlogPostBySlug(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getBlogPostBySlug(arg0);
             return result;
         }
     }

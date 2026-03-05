@@ -262,7 +262,7 @@ export function useGetAllSocialLinks() {
     queryFn: async () => {
       try {
         if (!actor) return [];
-        return await actor.getActiveSocialLinks();
+        return await actor.getAllSocialLinksAdmin();
       } catch {
         return [];
       }
@@ -271,6 +271,9 @@ export function useGetAllSocialLinks() {
     retry: false,
   });
 }
+
+// Alias for admin social links panel
+export const useGetAllSocialLinksAdmin = useGetAllSocialLinks;
 
 // ─── MUTATIONS ────────────────────────────────────────────
 
