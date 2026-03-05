@@ -1,10 +1,6 @@
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useIsCallerAdmin } from "@/hooks/useQueries";
-import {
-  getSecretParameter,
-  getSessionParameter,
-  storeSessionParameter,
-} from "@/utils/urlParams";
+import { getSecretParameter, storeSessionParameter } from "@/utils/urlParams";
 import { useNavigate } from "@tanstack/react-router";
 import { Code2, Key, Loader2, LogIn, Shield } from "lucide-react";
 import { motion } from "motion/react";
@@ -14,8 +10,8 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [adminToken, setAdminToken] = useState<string>(() => {
-    // Pre-fill from sessionStorage or URL if already captured
-    return getSessionParameter("caffeineAdminToken") ?? "";
+    // Pre-fill from sessionStorage or URL — getSecretParameter handles all sources
+    return getSecretParameter("caffeineAdminToken") ?? "";
   });
 
   const {

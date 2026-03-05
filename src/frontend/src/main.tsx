@@ -15,11 +15,10 @@ declare global {
   }
 }
 
-// ─── Capture admin token BEFORE any routing happens ───────────────────────────
-// Caffeine dashboard injects the token as ?caffeineAdminToken=xxx in the URL.
-// We must read it here so it's in sessionStorage regardless of which route loads
-// first (e.g. /admin redirects straight to /admin/dashboard, bypassing the
-// login page entirely, which is where token capture used to happen).
+// Capture admin token from URL at app startup BEFORE any routing.
+// The Caffeine dashboard injects it as ?caffeineAdminToken=xxx.
+// Must be called here so it's stored even when /admin redirects
+// directly to /admin/dashboard (bypassing the login page entirely).
 getSecretParameter("caffeineAdminToken");
 
 const queryClient = new QueryClient();
